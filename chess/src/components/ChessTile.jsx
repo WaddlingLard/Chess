@@ -16,7 +16,7 @@ function ChessTile({ location }) {
     // Set the position of the chess tile
     useEffect(() => {
         if (location.x == undefined || location.y == undefined) {
-            throw new Error(message = "Coordinates not provided to the chess tile constructor!");
+            throw new Error("Coordinates not provided to the chess tile constructor!");
         }
         // Again, redundant naming
         setPosition((prev) => ({ row: location.x, col: location.y }));

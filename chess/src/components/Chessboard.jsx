@@ -13,7 +13,7 @@ function Chessboard({ width, height }) {
     // Initialize the dimensions for the game board
     useEffect(() => {
         if (width == undefined || height == undefined) {
-            throw new Error(message = "Dimensions not provided to the game board constructor");
+            throw new Error("Dimensions not provided to the game board constructor");
         }
 
         // The naming is a little redundant but will do for now
@@ -48,7 +48,7 @@ function Chessboard({ width, height }) {
         return grid;
     }
 
-    setTimeout(() => { console.log(gameGrid.grid) }, 1000);
+    // setTimeout(() => { console.log(gameGrid.grid) }, 1000);
 
     const drawBoard = (width, height) => (
         <TileContext value={{ tileSize: DEFAULT_TILE_SIZE }}>
