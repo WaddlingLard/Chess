@@ -1,10 +1,14 @@
-import React, { useState, useEffect, StyleSheet } from 'react';
+import React, { useState, useEffect, createContext } from 'react';
 import '../css/chessboard.css';
+import ChessTile from './ChessTile';
+
+export const TileContext = createContext(undefined);
 
 function Chessboard({ width, height }) {
 
-    const [dimension, setDimension] = useState({ width: undefined, height: undefined });
-    const DEFAULT_BOX_SIZE = 60;
+    const [dimension, setDimension] = useState({ width: undefined, height: undefined, setValue: false });
+    const [gameGrid, setGameGrid] = useState({ grid: [] });
+    const DEFAULT_TILE_SIZE = 60;
 
     // Initialize the dimensions for the game board
     useEffect(() => {
@@ -13,33 +17,56 @@ function Chessboard({ width, height }) {
         }
 
         // The naming is a little redundant but will do for now
-        setDimension({ width: width, height: height })
+        setDimension((prev) => ({ width: width, height: height, setValue: true }));
     }, [])
 
+    // Build the game grid after the dimensions are set
+    useEffect(() => {
+        if (!dimension.setValue) {
+            return;
+        }
+        const newGameGrid = buildGameGrid();
+        setGameGrid({ grid: newGameGrid });
+    }, [dimension])
+
+    const buildGameGrid = () => {
+
+        const grid = [];
+        const colList = Array(dimension.width);
+        const rowList = Array(dimension.height);
+
+        // Build the grid
+        for (let row = 0; row < rowList.length; row++) {
+            console.log('new row!')
+            grid[row] = [];
+            for (let col = 0; col < colList.length; col++) {
+                console.log('new col!')
+                const position = { x: col, y: row };
+                grid[row][col] = [position];
+            }
+        }
+        return grid;
+    }
+
+    setTimeout(() => { console.log(gameGrid.grid) }, 1000);
+
     const drawBoard = (width, height) => (
-        <>
-            {[...Array(width)].map((_, colIndex) => (
+        <TileContext value={{ tileSize: DEFAULT_TILE_SIZE }}>
+            {gameGrid.grid.map((gridRow, rowIndex) => (
+
                 <div
-                    key={colIndex}
+                    key={rowIndex}
                     style={{
-                        width: `${DEFAULT_BOX_SIZE}px`, height: `${DEFAULT_BOX_SIZE}px`,
+                        width: 'fit-content', height: 'fit-content',
                     }}
                 >
-                    {[...Array(height)].map((_, rowIndex) => (
-                        <div
-                            key={rowIndex}
-                            style={{
-                                width: '100%', height: '100%',
-                                backgroundColor: (colIndex + rowIndex) % 2 == 0 ? '#FFF' : '#000'
-                            }}
-                        >
-                            <p style={{ color: '#888', margin: 0 }}> {rowIndex}{colIndex} </p>
-                        </div>
+                    {gridRow.map((tile, colIndex) => (
+                        <ChessTile key={colIndex} location={tile[0]} />
                     ))}
-
                 </div>
+
             ))}
-        </>
+        </TileContext>
     )
 
     return (
@@ -47,8 +74,8 @@ function Chessboard({ width, height }) {
             {/* Draw the board */}
             <div
                 style={{
-                    width: `${(DEFAULT_BOX_SIZE) * dimension.width}px`,
-                    height: `${(DEFAULT_BOX_SIZE) * dimension.height}px`,
+                    width: `${(DEFAULT_TILE_SIZE) * dimension.width}px`,
+                    height: `${(DEFAULT_TILE_SIZE) * dimension.height}px`,
                     // width: 'fit-content',
                     // height: 'fit-content',
                     // aspectRatio: 1 / 1,
