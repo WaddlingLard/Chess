@@ -15,10 +15,31 @@ function Chessboard({ width, height }) {
         setDimension({ width: width, height: height })
     }, [])
 
-    const drawBoard = () => ({
+    const drawBoard = (width, height) => (
+        <>
+            {[...Array(width)].map((_, colIndex) => (
+                <div
+                    key={colIndex}
+                    style={{
+                        width: '60px', height: '60px',
+                    }}
+                >
+                    {[...Array(height)].map((_, rowIndex) => (
+                        <div
+                            key={rowIndex}
+                            style={{
+                                width: '100%', height: '100%',
+                                backgroundColor: (colIndex + rowIndex) % 2 == 0 ? '#FFF' : '#000'
+                            }}
+                        >
+                            <p style={{ color: '#888', margin: 0 }}> {rowIndex}{colIndex} </p>
+                        </div>
+                    ))}
 
-
-    });
+                </div>
+            ))}
+        </>
+    )
 
     return (
         <>
@@ -29,11 +50,14 @@ function Chessboard({ width, height }) {
                     height: '80%',
                     margin: 'auto',
                     display: 'flex',
+                    flexDirection: 'row',
                     justifyContent: 'center',
                     alignItems: 'center',
                     backgroundColor: '#333',
                 }}
             >
+                {drawBoard(dimension.width, dimension.height)}
+
 
             </div>
         </>
