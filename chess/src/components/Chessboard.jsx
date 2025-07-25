@@ -4,6 +4,7 @@ import '../css/chessboard.css';
 function Chessboard({ width, height }) {
 
     const [dimension, setDimension] = useState({ width: undefined, height: undefined });
+    const DEFAULT_BOX_SIZE = 60;
 
     // Initialize the dimensions for the game board
     useEffect(() => {
@@ -21,7 +22,7 @@ function Chessboard({ width, height }) {
                 <div
                     key={colIndex}
                     style={{
-                        width: '60px', height: '60px',
+                        width: `${DEFAULT_BOX_SIZE}px`, height: `${DEFAULT_BOX_SIZE}px`,
                     }}
                 >
                     {[...Array(height)].map((_, rowIndex) => (
@@ -46,17 +47,35 @@ function Chessboard({ width, height }) {
             {/* Draw the board */}
             <div
                 style={{
-                    width: '80%',
-                    height: '80%',
-                    margin: 'auto',
-                    display: 'flex',
-                    flexDirection: 'row',
+                    width: `${(DEFAULT_BOX_SIZE) * dimension.width}px`,
+                    height: `${(DEFAULT_BOX_SIZE) * dimension.height}px`,
+                    // width: 'fit-content',
+                    // height: 'fit-content',
+                    // aspectRatio: 1 / 1,
+                    // margin: 'auto',
+                    // padding: '5%',
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${dimension.width}, 1fr)`,
+                    padding: '6%',
+                    // margin: '5%',
+                    borderRadius: '24px',
+                    // flexDirection: 'row',
                     justifyContent: 'center',
-                    alignItems: 'center',
-                    backgroundColor: '#333',
+                    // justifySelf: 'center',
+                    // alignItems: 'center',
+                    backgroundColor: '#55342B',
+                    // overflow: 'hidden',
+                    // zIndex: 2,
+                    // boxSizing: 'border-box',
                 }}
             >
+                {/* <div style={{
+                    display: 'flex',
+                    margin: 'auto'
+                }}> */}
                 {drawBoard(dimension.width, dimension.height)}
+
+                {/* </div> */}
 
 
             </div>

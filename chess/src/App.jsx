@@ -6,7 +6,7 @@ import Chessboard from './components/Chessboard'
 
 function App() {
 
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(8)
 
   // Default dimensions for a chess board
   const [boardDimension, setBoardDimension] = useState(8);
@@ -34,9 +34,25 @@ function App() {
         Click on the Vite and React logos to learn more
       </p> */}
 
-      {/* <div style={{ flexGrow: 1, height: '100%', margin: 'auto' }}> */}
-      <Chessboard width={boardDimension} height={boardDimension} />
-      {/* </div > */}
+      <div style={{
+        // zIndex: 1,
+        display: 'flex',
+        // width: 'fit-content',
+        // height: 'fit-content',
+        // padding: '100px',
+        // minHeight: '400px',
+        // minWidth: '400px',
+
+        // margin: 'auto',
+        // margin: '5%',
+        padding: '4%',
+        backgroundColor: '#AF855C',
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'visible',
+      }}>
+        <Chessboard width={boardDimension} height={boardDimension} />
+      </div >
 
     </>
   )
