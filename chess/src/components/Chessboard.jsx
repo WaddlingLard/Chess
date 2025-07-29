@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext } from 'react';
+import React, { useState, useEffect, createContext, Children } from 'react';
 import '../css/chessboard.css';
 import ChessTile from './ChessTile';
 
@@ -6,7 +6,7 @@ export const TileContext = createContext(undefined);
 
 function Chessboard({ width, height }) {
 
-    const [dimension, setDimension] = useState({ width: undefined, height: undefined, setValue: false });
+    const [dimension, setDimension] = useState({ width: undefined, height: undefined, valueSet: false });
     const [gameGrid, setGameGrid] = useState({ grid: [] });
     const DEFAULT_TILE_SIZE = 60;
 
@@ -17,17 +17,19 @@ function Chessboard({ width, height }) {
         }
 
         // The naming is a little redundant but will do for now
-        setDimension((prev) => ({ width: width, height: height, setValue: true }));
-    }, [])
+        setDimension((prev) => ({ width: width, height: height, valueSet: true }));
+        // console.log('Dimension has been set!');
+    }, []);
 
     // Build the game grid after the dimensions are set
     useEffect(() => {
-        if (!dimension.setValue) {
+        if (!dimension.valueSet) {
             return;
         }
         const newGameGrid = buildGameGrid();
         setGameGrid({ grid: newGameGrid });
-    }, [dimension])
+    }, [dimension]);
+
 
     const buildGameGrid = () => {
 
@@ -37,70 +39,113 @@ function Chessboard({ width, height }) {
 
         // Build the grid
         for (let row = 0; row < rowList.length; row++) {
-            console.log('new row!')
+            // console.log('new row!')
             grid[row] = [];
             for (let col = 0; col < colList.length; col++) {
-                console.log('new col!')
-                const position = { x: col, y: row };
-                grid[row][col] = [position];
+                // console.log('new col!')
+                const tileLocation = { x: col, y: row };
+                grid[row][col] = [tileLocation];
             }
         }
         return grid;
     }
 
-    // setTimeout(() => { console.log(gameGrid.grid) }, 1000);
+    const drawBoard = (grid, { width, height }) => {
 
-    const drawBoard = (width, height) => (
-        <TileContext value={{ tileSize: DEFAULT_TILE_SIZE }}>
-            {gameGrid.grid.map((gridRow, rowIndex) => (
+        const currentGrid = [...grid];
 
-                <div
-                    key={rowIndex}
-                    style={{
-                        width: 'fit-content', height: 'fit-content',
-                    }}
-                >
-                    {gridRow.map((tile, colIndex) => (
-                        <ChessTile key={colIndex} location={tile[0]} />
-                    ))}
-                </div>
+        if (grid.length !== height) {
+            throw new Error(`Grid does not match the provided height! ${grid.length} !== ${height}`);
+        }
 
-            ))}
-        </TileContext>
-    )
+        if (grid[0].length !== width) {
+            throw new Error(`Grid does not match the provided width! ${grid[0].length} !== ${width}`);
+        }
+        // TRYING TO SAVE ALL CHESSTILES INTO THE GAMEGRID
+
+        const component = (
+            <TileContext value={{ tileSize: DEFAULT_TILE_SIZE }}>
+                {gameGrid.grid.map((gridRow, rowIndex) => (
+
+                    <div
+                        key={rowIndex}
+                        style={{
+                            width: 'fit-content', height: 'fit-content',
+                        }}
+                    >
+                        {gridRow.map((tile, colIndex) => {
+                            const isFinalTile = (rowIndex === height - 1 && colIndex === width - 1) ? true : false;
+
+                            // ALTER HERE TO CHANGE INITIAL CONSTRUCTOR DATA
+                            const data = { location: tile[0], };
+                            const chessTile = <ChessTile key={colIndex} constructorData={data} />;
+                            currentGrid[rowIndex][colIndex].tileData = data;
+                            return (chessTile);
+                        })}
+                    </div>
+
+                ))}
+            </TileContext>
+        );
+
+        const updatedGrid = currentGrid;
+
+        // console.log(`Updated Grid`, updatedGrid);
+
+        return { component, value: updatedGrid };
+    }
+
+    // Use a saved conditional to have a useEffect to store the value from
+    // the component while also generating the HTML as well.
+    const gameGridCreated = gameGrid.grid.length !== 0;
+    const generateBoard = gameGridCreated ? drawBoard(gameGrid.grid, dimension).component : null;
+
+    useEffect(() => {
+        if (gameGridCreated) {
+            const updatedGrid = drawBoard(gameGrid.grid, dimension).value;
+            setGameGrid((prev) => ({ ...prev, grid: updatedGrid }));
+        }
+    }, [gameGridCreated])
+
+    // Styles rules here
+    const styles = ({
+        chessBoard: {
+            width: `${(DEFAULT_TILE_SIZE) * dimension.width}px`,
+            height: `${(DEFAULT_TILE_SIZE) * dimension.height}px`,
+            // width: 'fit-content',
+            // height: 'fit-content',
+            // aspectRatio: 1 / 1,
+            // margin: 'auto',
+            // padding: '5%',
+            display: 'grid',
+            gridTemplateColumns: `repeat(${dimension.width}, 1fr)`,
+            padding: '6%',
+            // margin: '5%',
+            borderRadius: '24px',
+            // flexDirection: 'row',
+            justifyContent: 'center',
+            // justifySelf: 'center',
+            // alignItems: 'center',
+            backgroundColor: '#55342B',
+            // overflow: 'hidden',
+            // zIndex: 2,
+            // boxSizing: 'border-box',
+        }
+    });
 
     return (
         <>
             {/* Draw the board */}
             <div
-                style={{
-                    width: `${(DEFAULT_TILE_SIZE) * dimension.width}px`,
-                    height: `${(DEFAULT_TILE_SIZE) * dimension.height}px`,
-                    // width: 'fit-content',
-                    // height: 'fit-content',
-                    // aspectRatio: 1 / 1,
-                    // margin: 'auto',
-                    // padding: '5%',
-                    display: 'grid',
-                    gridTemplateColumns: `repeat(${dimension.width}, 1fr)`,
-                    padding: '6%',
-                    // margin: '5%',
-                    borderRadius: '24px',
-                    // flexDirection: 'row',
-                    justifyContent: 'center',
-                    // justifySelf: 'center',
-                    // alignItems: 'center',
-                    backgroundColor: '#55342B',
-                    // overflow: 'hidden',
-                    // zIndex: 2,
-                    // boxSizing: 'border-box',
-                }}
+                style={{ ...styles.chessBoard }}
             >
                 {/* <div style={{
                     display: 'flex',
                     margin: 'auto'
                 }}> */}
-                {drawBoard(dimension.width, dimension.height)}
+                {/* {gameGrid.grid.length !== 0 && drawBoard(gameGrid.grid, dimension)} */}
+
+                {generateBoard}
 
                 {/* </div> */}
 
