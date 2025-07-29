@@ -1,25 +1,34 @@
-import React, { useState, useEffect, createContext, Children } from 'react';
-import '../css/chessboard.css';
-import ChessTile from './ChessTile';
-import ChessPiece from './ChessPiece';
-import { PIECE_TYPE } from './ChessPiece';
+import React, { useState, useEffect, createContext } from "react";
+import "../css/chessboard.css";
+import ChessTile from "./ChessTile";
+import ChessPiece from "./ChessPiece";
+import { PIECE_TYPE } from "./ChessPiece";
 
 export const TileContext = createContext(undefined);
 
 function Chessboard({ width, height }) {
-
-    const [dimension, setDimension] = useState({ width: undefined, height: undefined, valueSet: false });
+    const [dimension, setDimension] = useState({
+        width: undefined,
+        height: undefined,
+        valueSet: false,
+    });
     const [gameGrid, setGameGrid] = useState({ grid: [] });
     const DEFAULT_TILE_SIZE = 60;
 
     // Initialize the dimensions for the game board
     useEffect(() => {
         if (width == undefined || height == undefined) {
-            throw new Error("Dimensions not provided to the game board constructor");
+            throw new Error(
+                "Dimensions not provided to the game board constructor"
+            );
         }
 
         // The naming is a little redundant but will do for now
-        setDimension((prev) => ({ width: width, height: height, valueSet: true }));
+        setDimension((prev) => ({
+            width: width,
+            height: height,
+            valueSet: true,
+        }));
         // console.log('Dimension has been set!');
     }, []);
 
@@ -32,9 +41,7 @@ function Chessboard({ width, height }) {
         setGameGrid({ grid: newGameGrid });
     }, [dimension]);
 
-
     const buildGameGrid = () => {
-
         const grid = [];
         const colList = Array(dimension.width);
         const rowList = Array(dimension.height);
@@ -50,46 +57,63 @@ function Chessboard({ width, height }) {
             }
         }
         return grid;
-    }
+    };
 
     const drawBoard = (grid, { width, height }) => {
-
         const currentGrid = [...grid];
-        const isFirstRow = (currentRow) => { return currentRow == 0 };
+        const isFirstRow = (currentRow) => {
+            return currentRow == 0;
+        };
 
         if (grid.length !== height) {
-            throw new Error(`Grid does not match the provided height! ${grid.length} !== ${height}`);
+            throw new Error(
+                `Grid does not match the provided height! ${grid.length} !== ${height}`
+            );
         }
 
         if (grid[0].length !== width) {
-            throw new Error(`Grid does not match the provided width! ${grid[0].length} !== ${width}`);
+            throw new Error(
+                `Grid does not match the provided width! ${grid[0].length} !== ${width}`
+            );
         }
 
         const component = (
+            // I KNOW THIS MAPPING IS WORDED WRONG COL <=> ROW, NEED TO FIX (will procrastinate in the meantime)
             <TileContext value={{ tileSize: DEFAULT_TILE_SIZE }}>
                 {gameGrid.grid.map((gridRow, rowIndex) => (
-
                     <div
                         key={rowIndex}
                         style={{
-                            width: 'fit-content', height: 'fit-content',
+                            width: "fit-content",
+                            height: "fit-content",
                         }}
                     >
                         {gridRow.map((tile, colIndex) => {
-                            const isFinalTile = (rowIndex === height - 1 && colIndex === width - 1) ? true : false;
+                            //   const isFinalTile =
+                            //     rowIndex === height - 1 && colIndex === width - 1
+                            //       ? true
+                            //       : false;
 
                             // ALTER HERE TO CHANGE INITIAL CONSTRUCTOR DATA
                             // TEMP: Make pawns here (HANDLE PIECE CREATION LOGIC ELSEWHERE)
-                            const chessPiece = isFirstRow(colIndex) ? PIECE_TYPE.PAWN : undefined;
-                            const data = { location: tile[0], piece: chessPiece };
+                            const chessPiece = isFirstRow(colIndex)
+                                ? PIECE_TYPE.PAWN
+                                : undefined;
+                            const data = {
+                                location: tile[0],
+                                piece: chessPiece,
+                            };
 
-
-                            const chessTile = <ChessTile key={colIndex} constructorData={data} />;
+                            const chessTile = (
+                                <ChessTile
+                                    key={colIndex}
+                                    constructorData={data}
+                                />
+                            );
                             currentGrid[rowIndex][colIndex].tileData = data;
-                            return (chessTile);
+                            return chessTile;
                         })}
                     </div>
-
                 ))}
             </TileContext>
         );
@@ -99,52 +123,54 @@ function Chessboard({ width, height }) {
         // console.log(`Updated Grid`, updatedGrid);
 
         return { component, value: updatedGrid };
-    }
+    };
 
     // Use a saved conditional to have a useEffect to store the value from
     // the component while also generating the HTML as well.
     const gameGridCreated = gameGrid.grid.length !== 0;
-    const generateBoard = gameGridCreated ? drawBoard(gameGrid.grid, dimension).component : null;
+    const generateBoard = gameGridCreated
+        ? drawBoard(gameGrid.grid, dimension).component
+        : null;
 
     useEffect(() => {
         if (gameGridCreated) {
             const updatedGrid = drawBoard(gameGrid.grid, dimension).value;
             setGameGrid((prev) => ({ ...prev, grid: updatedGrid }));
         }
-    }, [gameGridCreated])
+    }, [gameGridCreated]);
 
     // Styles rules here
-    const styles = ({
+    const styles = {
         chessBoard: {
-            width: `${(DEFAULT_TILE_SIZE) * dimension.width}px`,
-            height: `${(DEFAULT_TILE_SIZE) * dimension.height}px`,
+            width: `${DEFAULT_TILE_SIZE * dimension.width}px`,
+            height: `${DEFAULT_TILE_SIZE * dimension.height}px`,
             // width: 'fit-content',
             // height: 'fit-content',
             // aspectRatio: 1 / 1,
             // margin: 'auto',
             // padding: '5%',
-            display: 'grid',
+            display: "grid",
             gridTemplateColumns: `repeat(${dimension.width}, 1fr)`,
-            padding: '6%',
+            padding: "6%",
             // margin: '5%',
-            borderRadius: '24px',
+            borderRadius: "24px",
             // flexDirection: 'row',
-            justifyContent: 'center',
+            justifyContent: "center",
             // justifySelf: 'center',
             // alignItems: 'center',
-            backgroundColor: '#55342B',
+            backgroundColor: "#55342B",
             // overflow: 'hidden',
             // zIndex: 2,
             // boxSizing: 'border-box',
-        }
-    });
+        },
+    };
 
     return (
         <>
             {/* Draw the board */}
             <div
                 style={{ ...styles.chessBoard }}
-            // className='chessboard'
+                // className='chessboard'
             >
                 {/* <div style={{
                     display: 'flex',
@@ -155,11 +181,9 @@ function Chessboard({ width, height }) {
                 {generateBoard}
 
                 {/* </div> */}
-
-
             </div>
         </>
-    )
+    );
 }
 
 export default Chessboard;
