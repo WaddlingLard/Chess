@@ -7,27 +7,45 @@ const TILE_STATE = Object.freeze({
     IN_CHECK: 'IN_CHECK',
 });
 
-function ChessTile({ location }) {
+function ChessTile({ constructorData }) {
+
+    const gridPoint = constructorData.location;
+    // Add more variables for constructorData if needed
 
     const parentContext = useContext(TileContext);
-    const [position, setPosition] = useState({ row: undefined, col: undefined });
+    const [position, setPosition] = useState({ row: undefined, col: undefined, valueSet: false });
     const [currentState, setCurrentState] = useState(TILE_STATE.EMPTY);
+    const [isHoveringTile, setIsHoveringTile] = useState(false);
+    const [tileColor, setTileColor] = useState(undefined);
 
     // Set the position of the chess tile
     useEffect(() => {
-        if (location.x == undefined || location.y == undefined) {
+        if (gridPoint.x == undefined || gridPoint.y == undefined) {
             throw new Error("Coordinates not provided to the chess tile constructor!");
         }
         // Again, redundant naming
-        setPosition((prev) => ({ row: location.x, col: location.y }));
+        setPosition((prev) => ({ row: gridPoint.x, col: gridPoint.y, valueSet: true }));
     }, [])
+
+    useEffect(() => {
+        if (!position.valueSet) {
+            return;
+        }
+        setTileColor((position.row + position.col) % 2 == 0 ? '#FFF' : '#000');
+    }, [position])
 
     return (
         <>
             <div
+                onMouseEnter={() => setIsHoveringTile(true)}
+                onMouseLeave={() => setIsHoveringTile(false)}
                 style={{
                     width: parentContext.tileSize, height: parentContext.tileSize,
-                    backgroundColor: (position.row + position.col) % 2 == 0 ? '#FFF' : "#000",
+                    backgroundColor: isHoveringTile ? '#B4D5FF' : tileColor,
+                    transitionDuration: '300ms',
+                    transitionProperty: 'background-color',
+                    transitionTimingFunction: 'ease-out',
+                    transitionDelay: '0ms',
                 }}
             >
 
