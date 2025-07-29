@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const PIECE_TYPE = Object.freeze({
+export const PIECE_TYPE = Object.freeze({
     PAWN: 'PAWN',
     KNIGHT: 'KNIGHT',
     BISHOP: 'BISHOP',
@@ -25,7 +25,7 @@ function ChessPiece({ name }) {
     return (
         <>
             <div>
-                <p> {pieceType} </p>
+                <p style={{ color: '#55F' }}> {pieceType} </p>
             </div>
         </>
     );

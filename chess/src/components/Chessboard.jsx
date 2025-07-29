@@ -1,6 +1,8 @@
 import React, { useState, useEffect, createContext, Children } from 'react';
 import '../css/chessboard.css';
 import ChessTile from './ChessTile';
+import ChessPiece from './ChessPiece';
+import { PIECE_TYPE } from './ChessPiece';
 
 export const TileContext = createContext(undefined);
 
@@ -37,7 +39,7 @@ function Chessboard({ width, height }) {
         const colList = Array(dimension.width);
         const rowList = Array(dimension.height);
 
-        // Build the grid
+        // Iterate over the dimensions to make a base grid
         for (let row = 0; row < rowList.length; row++) {
             // console.log('new row!')
             grid[row] = [];
@@ -53,6 +55,7 @@ function Chessboard({ width, height }) {
     const drawBoard = (grid, { width, height }) => {
 
         const currentGrid = [...grid];
+        const isFirstRow = (currentRow) => { return currentRow == 0 };
 
         if (grid.length !== height) {
             throw new Error(`Grid does not match the provided height! ${grid.length} !== ${height}`);
@@ -61,7 +64,6 @@ function Chessboard({ width, height }) {
         if (grid[0].length !== width) {
             throw new Error(`Grid does not match the provided width! ${grid[0].length} !== ${width}`);
         }
-        // TRYING TO SAVE ALL CHESSTILES INTO THE GAMEGRID
 
         const component = (
             <TileContext value={{ tileSize: DEFAULT_TILE_SIZE }}>
@@ -77,7 +79,11 @@ function Chessboard({ width, height }) {
                             const isFinalTile = (rowIndex === height - 1 && colIndex === width - 1) ? true : false;
 
                             // ALTER HERE TO CHANGE INITIAL CONSTRUCTOR DATA
-                            const data = { location: tile[0], };
+                            // TEMP: Make pawns here (HANDLE PIECE CREATION LOGIC ELSEWHERE)
+                            const chessPiece = isFirstRow(colIndex) ? PIECE_TYPE.PAWN : undefined;
+                            const data = { location: tile[0], piece: chessPiece };
+
+
                             const chessTile = <ChessTile key={colIndex} constructorData={data} />;
                             currentGrid[rowIndex][colIndex].tileData = data;
                             return (chessTile);
@@ -138,6 +144,7 @@ function Chessboard({ width, height }) {
             {/* Draw the board */}
             <div
                 style={{ ...styles.chessBoard }}
+            // className='chessboard'
             >
                 {/* <div style={{
                     display: 'flex',
