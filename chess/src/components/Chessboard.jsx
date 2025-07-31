@@ -5,30 +5,39 @@ import ChessPiece from "./ChessPiece";
 import { PIECE_TYPE } from "./ChessPiece";
 
 export const TileContext = createContext(undefined);
+export const DEFAULT_PIECE_LAYOUT = [];
+export const DEFAULT_BOARD_DIMENSION = 8;
 
-function Chessboard({ width, height }) {
+function Chessboard({ boardWidth, boardHeight, renderScale }) {
     const [dimension, setDimension] = useState({
         width: undefined,
         height: undefined,
         valueSet: false,
     });
     const [gameGrid, setGameGrid] = useState({ grid: [] });
+    const [tileRenderSize, setTileRenderSize] = useState(DEFAULT_TILE_SIZE);
     const DEFAULT_TILE_SIZE = 60;
 
-    // Initialize the dimensions for the game board
+    // Initialize the dimensions/size for the game board
     useEffect(() => {
-        if (width == undefined || height == undefined) {
-            throw new Error(
-                "Dimensions not provided to the game board constructor"
-            );
-        }
+        // Use default value instead if failed to pass params
+        const useDefaultDimension =
+            boardWidth === undefined || boardHeight === undefined
+                ? true
+                : false;
 
         // The naming is a little redundant but will do for now
         setDimension((prev) => ({
-            width: width,
-            height: height,
+            width: useDefaultDimension ? DEFAULT_BOARD_DIMENSION : boardWidth,
+            height: useDefaultDimension ? DEFAULT_BOARD_DIMENSION : boardHeight,
             valueSet: true,
         }));
+
+        // Apply rendering scale if exists
+        renderScale === undefined
+            ? none
+            : setTileRenderSize(tileRenderSize * renderScale);
+
         // console.log('Dimension has been set!');
     }, []);
 
@@ -79,7 +88,7 @@ function Chessboard({ width, height }) {
 
         const component = (
             // I KNOW THIS MAPPING IS WORDED WRONG COL <=> ROW, NEED TO FIX (will procrastinate in the meantime)
-            <TileContext value={{ tileSize: DEFAULT_TILE_SIZE }}>
+            <TileContext value={{ tileSize: tileRenderSize }}>
                 {gameGrid.grid.map((gridRow, rowIndex) => (
                     <div
                         key={rowIndex}
@@ -142,8 +151,8 @@ function Chessboard({ width, height }) {
     // Styles rules here
     const styles = {
         chessBoard: {
-            width: `${DEFAULT_TILE_SIZE * dimension.width}px`,
-            height: `${DEFAULT_TILE_SIZE * dimension.height}px`,
+            width: `${tileRenderSize * dimension.width}px`,
+            height: `${tileRenderSize * dimension.height}px`,
             // width: 'fit-content',
             // height: 'fit-content',
             // aspectRatio: 1 / 1,
