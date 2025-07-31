@@ -5,12 +5,40 @@ import { DEFAULT_PIECE_LAYOUT } from "./Chessboard";
 function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
     const titleCSS = Object.freeze({ margin: "1rem" });
 
+    const [toggleChessPieces, setToggleChessPieces] = useState(false);
+    const [tempPieceLayout, setTempPieceLayout] = useState({ grid: [] });
+
+    // Initialize the temporary piece layout with default
+    useEffect(() => {
+        const useDefaultLayout = pieceSetup === undefined;
+        const newPieceGrid = useDefaultLayout
+            ? DEFAULT_PIECE_LAYOUT
+            : pieceSetup;
+
+        // console.log("New Piece Grid:", newPieceGrid);
+
+        setTempPieceLayout((prev) => ({
+            ...prev,
+            grid: newPieceGrid,
+        }));
+    }, []);
+
+    useEffect(() => {
+        // console.log("TempPieceLayout: ", tempPieceLayout);
+    }, [tempPieceLayout]);
+
     const buttonHandler = () => {
         // Form checking
 
         // Start the game!
         setGameStarter(true);
     };
+
+    // Guard to finish updating state
+    if (tempPieceLayout.grid.length === 0) {
+        console.log(tempPieceLayout);
+        return null;
+    }
 
     return (
         <>
@@ -92,8 +120,23 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
                             <Chessboard
                                 // ref={chessBoardRef}
                                 renderScale={0.5}
+                                chessPieceLayout={tempPieceLayout.grid}
                             />
                         </div>
+                        <div
+                            style={{
+                                width: "100%",
+                                display: "flex",
+                                justifyContent: "space-around",
+                            }}
+                        >
+                            <button onClick={() => {}}>Default</button>
+                            <button onClick={() => {}}>Customize!</button>
+                        </div>
+
+                        {/* {toggleChessPieces && (
+
+                        )} */}
                     </div>
                 </div>
             </div>
