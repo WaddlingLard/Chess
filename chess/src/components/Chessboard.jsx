@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext } from "react";
+import React, { useState, useEffect, createContext, useRef } from "react";
 import "../css/chessboard.css";
 import ChessTile from "./ChessTile";
 import ChessPiece from "./ChessPiece";
@@ -44,6 +44,14 @@ function Chessboard({
     const [errorMessage, setErrorMessage] = useState(undefined);
     const [errorFlag, setErrorFlag] = useState(false);
 
+    // Reset the board states if there is a new chess piece layout
+    useEffect(() => {
+        console.log("Chessboard: new layout received!", chessPieceLayout);
+        if (gameGrid.grid != undefined) {
+            setGameGrid((prev) => ({ grid: [] }));
+        }
+    }, [chessPieceLayout]);
+
     // Initialize the dimensions/size for the game board
     useEffect(() => {
         // Use default value instead if failed to pass params
@@ -52,7 +60,7 @@ function Chessboard({
 
         const useDefaultPieceLayout = chessPieceLayout === undefined;
 
-        // console.log(useDefaultPieceLayout, chessPieceLayout);
+        console.log(useDefaultPieceLayout, chessPieceLayout);
 
         setPieceLayout((prev) => ({
             pieceGrid: useDefaultPieceLayout
@@ -70,8 +78,8 @@ function Chessboard({
         // Apply rendering scale if exists
         renderScale === undefined
             ? console.log("No render scale provided! Using default!")
-            : setTileRenderSize(tileRenderSize * renderScale);
-    }, []);
+            : setTileRenderSize(DEFAULT_TILE_SIZE * renderScale);
+    }, [chessPieceLayout]);
 
     // Build the game grid after the dimensions are set
     useEffect(() => {
@@ -90,17 +98,20 @@ function Chessboard({
         const newGameGrid = buildGameGrid();
         const pieceGrid = pieceLayout.pieceGrid;
 
-        // Does the game grid match with the piece layout dimensions?
+        // Does the game grid match with the piece layout dimension?
         if (
-            newGameGrid.length / 2 !== pieceGrid.length ||
-            newGameGrid[0].length !== pieceGrid[0].length
+            newGameGrid.length / 2 !==
+            pieceGrid.length
+            // ||
+            // newGameGrid[0].length !== pieceGrid[0].length
         ) {
             setErrorMessage(
                 `Provided piece layout does not match up with the dimensions of the chess board ${
                     newGameGrid.length / 2
-                } !== ${pieceGrid.length} || ${newGameGrid[0].length} !== ${
-                    pieceGrid[0].length
-                } (Rare bug spawn)`
+                } !== ${pieceGrid.length}`
+                // || ${newGameGrid[0].length} !== ${
+                //     pieceGrid[0].length
+                // } (Rare bug spawn)`
             );
             setErrorFlag(true);
         }
@@ -159,8 +170,9 @@ function Chessboard({
                         ? (chessPieceGrid.reverse(), (isGridReversed = true))
                         : null;
 
-                    // Grab the current array and reverse if on the other team
                     let currentPieceRow = chessPieceGrid[rowIndex % 4];
+
+                    // console.log(currentPieceRow);
 
                     return (
                         <div
@@ -173,12 +185,15 @@ function Chessboard({
                         >
                             {gridRow.map((tile, colIndex) => {
                                 // ALTER HERE TO CHANGE INITIAL CONSTRUCTOR DATA
+                                // console.log(colIndex);
                                 const chessPiece = currentPieceRow[colIndex];
                                 const data = {
                                     location: tile[0],
                                     piece: chessPiece,
                                 };
 
+                                // console.log(data);
+                                console.log("regenerating tile!");
                                 const chessTile = (
                                     <ChessTile
                                         key={colIndex}
@@ -254,6 +269,8 @@ function Chessboard({
             </>
         );
     }
+
+    console.log("Reloading board!", pieceLayout);
 
     return (
         <>

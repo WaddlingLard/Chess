@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import Chessboard from "./Chessboard";
 import { DEFAULT_PIECE_LAYOUT } from "./Chessboard";
+import { pieceToggler } from "./PieceSelector";
 
 function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
     const titleCSS = Object.freeze({ margin: "1rem" });
 
-    const [toggleChessPieces, setToggleChessPieces] = useState(false);
+    const [showPieceWindow, toggleWindow] = pieceToggler();
     const [tempPieceLayout, setTempPieceLayout] = useState({ grid: [] });
 
     // Initialize the temporary piece layout with default
@@ -24,7 +25,7 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
     }, []);
 
     useEffect(() => {
-        // console.log("TempPieceLayout: ", tempPieceLayout);
+        console.log("TempPieceLayout: ", tempPieceLayout);
     }, [tempPieceLayout]);
 
     const buttonHandler = () => {
@@ -34,9 +35,24 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
         setGameStarter(true);
     };
 
+    const handlePieceWindow = () => {
+        toggleWindow();
+
+        // Create the new empty grid
+        const emptyPieceGrid = Array(4)
+            .fill(null)
+            .map(() => {
+                return [];
+            });
+
+        setTempPieceLayout((prev) => ({
+            ...prev,
+            grid: emptyPieceGrid,
+        }));
+    };
+
     // Guard to finish updating state
     if (tempPieceLayout.grid.length === 0) {
-        console.log(tempPieceLayout);
         return null;
     }
 
@@ -128,13 +144,29 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
                                 width: "100%",
                                 display: "flex",
                                 justifyContent: "space-around",
+                                flex: 1,
                             }}
                         >
-                            <button onClick={() => {}}>Default</button>
-                            <button onClick={() => {}}>Customize!</button>
+                            <button
+                                onClick={() => {
+                                    setTempPieceLayout((prev) => ({
+                                        ...prev,
+                                        grid: DEFAULT_PIECE_LAYOUT,
+                                    }));
+                                }}
+                            >
+                                Default
+                            </button>
+                            <button
+                                onClick={() => {
+                                    handlePieceWindow();
+                                }}
+                            >
+                                Customize!
+                            </button>
                         </div>
 
-                        {/* {toggleChessPieces && (
+                        {/* {togglePieceSelector && (
 
                         )} */}
                     </div>
