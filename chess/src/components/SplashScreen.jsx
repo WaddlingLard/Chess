@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import Chessboard from "./Chessboard";
-import { DEFAULT_PIECE_LAYOUT } from "./Chessboard";
-import { pieceToggler } from "./PieceSelector";
+import Chessboard, { DEFAULT_PIECE_LAYOUT } from "./Chessboard";
+import PieceSelector, { pieceToggler } from "./PieceSelector";
 
 function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
     const titleCSS = Object.freeze({ margin: "1rem" });
 
-    const [showPieceWindow, toggleWindow] = pieceToggler();
+    const [showPieceWindow, toggleWindow, clearWindow] = pieceToggler();
     const [tempPieceLayout, setTempPieceLayout] = useState({ grid: [] });
 
     // Initialize the temporary piece layout with default
@@ -129,10 +128,27 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
                         </p>
                         <div
                             style={{
+                                position: "relative",
                                 width: "inherit",
                                 height: "inherit",
                             }}
                         >
+                            {showPieceWindow && (
+                                <div
+                                    style={{
+                                        position: "absolute",
+                                        top: 0,
+                                        width: "100%",
+                                        height: "50%",
+                                        // inset: "50% 0%",
+                                        opacity: 0.8,
+                                        borderRadius: "24px 24px 0px 0px",
+                                        border: "2px black dotted",
+                                        backgroundColor: "#333",
+                                        boxSizing: "border-box",
+                                    }}
+                                ></div>
+                            )}
                             <Chessboard
                                 // ref={chessBoardRef}
                                 renderScale={0.5}
@@ -149,6 +165,7 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
                         >
                             <button
                                 onClick={() => {
+                                    clearWindow();
                                     setTempPieceLayout((prev) => ({
                                         ...prev,
                                         grid: DEFAULT_PIECE_LAYOUT,
@@ -166,9 +183,11 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
                             </button>
                         </div>
 
-                        {/* {togglePieceSelector && (
-
-                        )} */}
+                        {showPieceWindow && (
+                            <div style={{ fontSize: "1em" }}>
+                                <PieceSelector />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
