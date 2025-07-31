@@ -3,7 +3,6 @@ import "../css/chessboard.css";
 import ChessTile from "./ChessTile";
 import ChessPiece from "./ChessPiece";
 import { PIECE_TYPE } from "./ChessPiece";
-import { faBorderNone } from "@fortawesome/free-solid-svg-icons";
 
 export const TileContext = createContext(undefined);
 export const DEFAULT_BOARD_DIMENSION = 8;
@@ -41,16 +40,19 @@ function Chessboard({
     const [pieceLayout, setPieceLayout] = useState({ pieceGrid: [] });
     const [tileRenderSize, setTileRenderSize] = useState(DEFAULT_TILE_SIZE);
 
+    // SHOULD MAKE THIS A GLOBAL STATE (MOVE LATER)
+    const [errorMessage, setErrorMessage] = useState(undefined);
+    const [errorFlag, setErrorFlag] = useState(false);
+
     // Initialize the dimensions/size for the game board
     useEffect(() => {
         // Use default value instead if failed to pass params
         const useDefaultDimension =
-            boardWidth === undefined || boardHeight === undefined
-                ? true
-                : false;
+            boardWidth === undefined || boardHeight === undefined;
 
-        const useDefaultPieceLayout =
-            chessPieceLayout === undefined ? true : false;
+        const useDefaultPieceLayout = chessPieceLayout === undefined;
+
+        // console.log(useDefaultPieceLayout, chessPieceLayout);
 
         setPieceLayout((prev) => ({
             pieceGrid: useDefaultPieceLayout
@@ -69,8 +71,6 @@ function Chessboard({
         renderScale === undefined
             ? console.log("No render scale provided! Using default!")
             : setTileRenderSize(tileRenderSize * renderScale);
-
-        // console.log('Dimension has been set!');
     }, []);
 
     // Build the game grid after the dimensions are set
@@ -78,8 +78,16 @@ function Chessboard({
         if (!dimension.valueSet) {
             return;
         }
-        const newGameGrid = buildGameGrid();
 
+        // Odd number of rows is not possible (imbalence of the board)
+        if (dimension.height % 2 == 1) {
+            setErrorMessage(
+                "The provided height for the board is odd (will cause an imbalence in the board)"
+            );
+            setErrorFlag(true);
+        }
+
+        const newGameGrid = buildGameGrid();
         const pieceGrid = pieceLayout.pieceGrid;
 
         // Does the game grid match with the piece layout dimensions?
@@ -87,13 +95,14 @@ function Chessboard({
             newGameGrid.length / 2 !== pieceGrid.length ||
             newGameGrid[0].length !== pieceGrid[0].length
         ) {
-            throw new Error(
+            setErrorMessage(
                 `Provided piece layout does not match up with the dimensions of the chess board ${
                     newGameGrid.length / 2
-                } !== ${pieceLayout.length} || ${newGameGrid[0].length} !== ${
-                    pieceLayout[0].length
+                } !== ${pieceGrid.length} || ${newGameGrid[0].length} !== ${
+                    pieceGrid[0].length
                 } (Rare bug spawn)`
             );
+            setErrorFlag(true);
         }
 
         setGameGrid({ grid: newGameGrid });
@@ -122,26 +131,27 @@ function Chessboard({
         const chessPieceGrid = [...pieceLayout.pieceGrid];
         let isGridReversed = false; // Used as a flag to prevent any further mutation
 
-        console.log(chessPieceGrid);
+        // console.log(chessPieceGrid);
 
         const isOtherTeam = (currentRow) => {
             return currentRow >= height / 2;
         };
 
         if (grid.length !== height) {
-            throw new Error(
+            setErrorMessage(
                 `Grid does not match the provided height! ${grid.length} !== ${height}`
             );
+            setErrorFlag(true);
         }
 
         if (grid[0].length !== width) {
-            throw new Error(
+            setErrorMessage(
                 `Grid does not match the provided width! ${grid[0].length} !== ${width}`
             );
+            setErrorFlag(true);
         }
 
         const component = (
-            // I KNOW THIS MAPPING IS WORDED WRONG COL <=> ROW, NEED TO FIX (will procrastinate in the meantime)
             <TileContext value={{ tileSize: tileRenderSize }}>
                 {gameGrid.grid.map((gridRow, rowIndex) => {
                     // Checks if time to generate other teams pieces, reverses and ensures only happens once
@@ -162,11 +172,6 @@ function Chessboard({
                             }}
                         >
                             {gridRow.map((tile, colIndex) => {
-                                //   const isFinalTile =
-                                //     rowIndex === height - 1 && colIndex === width - 1
-                                //       ? true
-                                //       : false;
-
                                 // ALTER HERE TO CHANGE INITIAL CONSTRUCTOR DATA
                                 const chessPiece = currentPieceRow[colIndex];
                                 const data = {
@@ -241,6 +246,15 @@ function Chessboard({
         },
     };
 
+    if (errorFlag) {
+        return (
+            <>
+                <h1>ERROR!</h1>
+                <p> {errorMessage} </p>
+            </>
+        );
+    }
+
     return (
         <>
             {/* Draw the board */}
@@ -248,6 +262,7 @@ function Chessboard({
                 style={{ ...styles.chessBoard }}
                 // className='chessboard'
             >
+                {/* {errorFlag && <p> {errorMessage} </p>} */}
                 {/* <div style={{
                     display: 'flex',
                     margin: 'auto'
