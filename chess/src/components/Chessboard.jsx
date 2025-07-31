@@ -3,20 +3,43 @@ import "../css/chessboard.css";
 import ChessTile from "./ChessTile";
 import ChessPiece from "./ChessPiece";
 import { PIECE_TYPE } from "./ChessPiece";
+import { faBorderNone } from "@fortawesome/free-solid-svg-icons";
 
 export const TileContext = createContext(undefined);
-export const DEFAULT_PIECE_LAYOUT = [];
 export const DEFAULT_BOARD_DIMENSION = 8;
 
-function Chessboard({ boardWidth, boardHeight, renderScale }) {
+// The typical layout for a chessboard
+export const DEFAULT_PIECE_LAYOUT = [
+    [
+        PIECE_TYPE.ROOK,
+        PIECE_TYPE.KNIGHT,
+        PIECE_TYPE.BISHOP,
+        PIECE_TYPE.QUEEN,
+        PIECE_TYPE.KING,
+        PIECE_TYPE.BISHOP,
+        PIECE_TYPE.KNIGHT,
+        PIECE_TYPE.ROOK,
+    ],
+    [...Array(DEFAULT_BOARD_DIMENSION).fill(PIECE_TYPE.PAWN)],
+    [],
+    [],
+];
+
+function Chessboard({
+    boardWidth,
+    boardHeight,
+    renderScale,
+    chessPieceLayout,
+}) {
+    const DEFAULT_TILE_SIZE = 60;
     const [dimension, setDimension] = useState({
         width: undefined,
         height: undefined,
         valueSet: false,
     });
     const [gameGrid, setGameGrid] = useState({ grid: [] });
+    const [pieceLayout, setPieceLayout] = useState({ pieceGrid: [] });
     const [tileRenderSize, setTileRenderSize] = useState(DEFAULT_TILE_SIZE);
-    const DEFAULT_TILE_SIZE = 60;
 
     // Initialize the dimensions/size for the game board
     useEffect(() => {
@@ -25,6 +48,15 @@ function Chessboard({ boardWidth, boardHeight, renderScale }) {
             boardWidth === undefined || boardHeight === undefined
                 ? true
                 : false;
+
+        const useDefaultPieceLayout =
+            chessPieceLayout === undefined ? true : false;
+
+        setPieceLayout((prev) => ({
+            pieceGrid: useDefaultPieceLayout
+                ? DEFAULT_PIECE_LAYOUT
+                : chessPieceLayout,
+        }));
 
         // The naming is a little redundant but will do for now
         setDimension((prev) => ({
@@ -35,7 +67,7 @@ function Chessboard({ boardWidth, boardHeight, renderScale }) {
 
         // Apply rendering scale if exists
         renderScale === undefined
-            ? none
+            ? console.log("No render scale provided! Using default!")
             : setTileRenderSize(tileRenderSize * renderScale);
 
         // console.log('Dimension has been set!');
@@ -47,6 +79,23 @@ function Chessboard({ boardWidth, boardHeight, renderScale }) {
             return;
         }
         const newGameGrid = buildGameGrid();
+
+        const pieceGrid = pieceLayout.pieceGrid;
+
+        // Does the game grid match with the piece layout dimensions?
+        if (
+            newGameGrid.length / 2 !== pieceGrid.length ||
+            newGameGrid[0].length !== pieceGrid[0].length
+        ) {
+            throw new Error(
+                `Provided piece layout does not match up with the dimensions of the chess board ${
+                    newGameGrid.length / 2
+                } !== ${pieceLayout.length} || ${newGameGrid[0].length} !== ${
+                    pieceLayout[0].length
+                } (Rare bug spawn)`
+            );
+        }
+
         setGameGrid({ grid: newGameGrid });
     }, [dimension]);
 
@@ -70,8 +119,13 @@ function Chessboard({ boardWidth, boardHeight, renderScale }) {
 
     const drawBoard = (grid, { width, height }) => {
         const currentGrid = [...grid];
-        const isFirstRow = (currentRow) => {
-            return currentRow == 0;
+        const chessPieceGrid = [...pieceLayout.pieceGrid];
+        let isGridReversed = false; // Used as a flag to prevent any further mutation
+
+        console.log(chessPieceGrid);
+
+        const isOtherTeam = (currentRow) => {
+            return currentRow >= height / 2;
         };
 
         if (grid.length !== height) {
@@ -89,41 +143,49 @@ function Chessboard({ boardWidth, boardHeight, renderScale }) {
         const component = (
             // I KNOW THIS MAPPING IS WORDED WRONG COL <=> ROW, NEED TO FIX (will procrastinate in the meantime)
             <TileContext value={{ tileSize: tileRenderSize }}>
-                {gameGrid.grid.map((gridRow, rowIndex) => (
-                    <div
-                        key={rowIndex}
-                        style={{
-                            width: "fit-content",
-                            height: "fit-content",
-                        }}
-                    >
-                        {gridRow.map((tile, colIndex) => {
-                            //   const isFinalTile =
-                            //     rowIndex === height - 1 && colIndex === width - 1
-                            //       ? true
-                            //       : false;
+                {gameGrid.grid.map((gridRow, rowIndex) => {
+                    // Checks if time to generate other teams pieces, reverses and ensures only happens once
+                    isOtherTeam(rowIndex) && !isGridReversed
+                        ? (chessPieceGrid.reverse(), (isGridReversed = true))
+                        : null;
 
-                            // ALTER HERE TO CHANGE INITIAL CONSTRUCTOR DATA
-                            // TEMP: Make pawns here (HANDLE PIECE CREATION LOGIC ELSEWHERE)
-                            const chessPiece = isFirstRow(colIndex)
-                                ? PIECE_TYPE.PAWN
-                                : undefined;
-                            const data = {
-                                location: tile[0],
-                                piece: chessPiece,
-                            };
+                    // Grab the current array and reverse if on the other team
+                    let currentPieceRow = chessPieceGrid[rowIndex % 4];
 
-                            const chessTile = (
-                                <ChessTile
-                                    key={colIndex}
-                                    constructorData={data}
-                                />
-                            );
-                            currentGrid[rowIndex][colIndex].tileData = data;
-                            return chessTile;
-                        })}
-                    </div>
-                ))}
+                    return (
+                        <div
+                            key={rowIndex}
+                            style={{
+                                display: "flex",
+                                width: "fit-content",
+                                height: "fit-content",
+                            }}
+                        >
+                            {gridRow.map((tile, colIndex) => {
+                                //   const isFinalTile =
+                                //     rowIndex === height - 1 && colIndex === width - 1
+                                //       ? true
+                                //       : false;
+
+                                // ALTER HERE TO CHANGE INITIAL CONSTRUCTOR DATA
+                                const chessPiece = currentPieceRow[colIndex];
+                                const data = {
+                                    location: tile[0],
+                                    piece: chessPiece,
+                                };
+
+                                const chessTile = (
+                                    <ChessTile
+                                        key={colIndex}
+                                        constructorData={data}
+                                    />
+                                );
+                                currentGrid[rowIndex][colIndex].tileData = data;
+                                return chessTile;
+                            })}
+                        </div>
+                    );
+                })}
             </TileContext>
         );
 
@@ -157,12 +219,15 @@ function Chessboard({ boardWidth, boardHeight, renderScale }) {
             // height: 'fit-content',
             // aspectRatio: 1 / 1,
             // margin: 'auto',
-            // padding: '5%',
+            // padding: "5%",
             display: "grid",
-            gridTemplateColumns: `repeat(${dimension.width}, 1fr)`,
-            padding: "6%",
+            gridTemplateRows: `repeat(${dimension.height}, 1fr)`,
+            padding: "1em",
             // margin: '5%',
             borderRadius: "24px",
+            borderStyle: "solid",
+            borderWidth: "3px",
+            borderColor: "#000",
             // flexDirection: 'row',
             justifyContent: "center",
             // justifySelf: 'center',
@@ -170,7 +235,9 @@ function Chessboard({ boardWidth, boardHeight, renderScale }) {
             backgroundColor: "#55342B",
             // overflow: 'hidden',
             // zIndex: 2,
-            // boxSizing: 'border-box',
+            boxSizing: "content-box",
+            // outline: "2px solid red",
+            // alignSelf: "center",
         },
     };
 
