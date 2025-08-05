@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useMemo } from "react";
 import { TileContext } from "./Chessboard";
 import ChessPiece from "./ChessPiece";
 import { PIECE_TYPE } from "./ChessPiece";
@@ -15,6 +15,7 @@ function ChessTile({ constructorData }) {
     // Add more variables for constructorData if needed'
 
     const parentContext = useContext(TileContext);
+
     const [position, setPosition] = useState({
         row: undefined,
         col: undefined,
@@ -23,21 +24,20 @@ function ChessTile({ constructorData }) {
     const [currentState, setCurrentState] = useState(TILE_STATE.EMPTY);
     const [isHoveringTile, setIsHoveringTile] = useState(false);
     const [tileColor, setTileColor] = useState(undefined);
+    const [chessPieceHolding, setChessPieceHolding] = useState(null);
 
-    // Set the position of the chess tile
+    // console.log("loading new tile!", gridPoint, chessPiece, currentState, isHoveringTile, tileColor, position);
+
+    // Set the position of the chess tile (initial use effect)
     useEffect(() => {
         if (gridPoint.x === undefined || gridPoint.y === undefined) {
-            throw new Error(
-                "Coordinates not provided to the chess tile constructor!"
-            );
+            throw new Error("Coordinates not provided to the chess tile constructor!");
         }
 
         // Validate chess piece (if there is one), plant on the tile if valid
-        if (
-            chessPiece !== undefined &&
-            PIECE_TYPE[chessPiece.name] !== undefined
-        ) {
+        if (chessPiece !== null) {
             setCurrentState(TILE_STATE.HOLDING_PIECE);
+            setChessPieceHolding(PIECE_TYPE[chessPiece.name]);
         }
 
         // Again, redundant naming
@@ -49,12 +49,39 @@ function ChessTile({ constructorData }) {
         setTileColor((gridPoint.x + gridPoint.y) % 2 == 0 ? "#FFF" : "#000");
     }, []);
 
-    // I believe this is pointless, moved setter for tile color outside into initial useEffect
-    // useEffect(() => {
-    //     if (!position.valueSet) {
-    //         return;
-    //     }
-    // }, [position])
+    // Resetting tile state if new chessPiece
+    useEffect(() => {
+        if (chessPiece === null) {
+            setCurrentState(TILE_STATE.EMPTY);
+            setChessPieceHolding(null);
+        } else {
+            setCurrentState(TILE_STATE.HOLDING_PIECE);
+            setChessPieceHolding(PIECE_TYPE[chessPiece.name]);
+        }
+    }, [chessPiece]);
+
+    const generatePiece = useMemo(() => {
+        if (currentState === TILE_STATE.EMPTY) {
+            // console.log("Returning null!");
+            return null;
+        }
+
+        // console.log(currentState);
+        try {
+            return (
+                <>
+                    <ChessPiece name={chessPieceHolding.name} />
+                </>
+            );
+        } catch (TypeError) {
+            console.log("Values at time of error:");
+            console.log("CurrentState: ", currentState);
+            console.log("Position: ", position);
+            console.log("ConstructorData: ", constructorData);
+
+            console.trace();
+        }
+    }, [currentState, chessPieceHolding]);
 
     return (
         <>
@@ -73,9 +100,8 @@ function ChessTile({ constructorData }) {
                     justifyContent: "center",
                 }}
             >
-                {currentState === TILE_STATE.HOLDING_PIECE && (
-                    <ChessPiece name={chessPiece.name} />
-                )}
+                {generatePiece}
+                {/* <div>piece loading</div> */}
             </div>
         </>
     );
