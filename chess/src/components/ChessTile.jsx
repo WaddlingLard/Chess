@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useMemo } from "react";
+import React, { useState, useEffect, useContext, useMemo, useRef } from "react";
 import { TileContext } from "./Chessboard";
 import ChessPiece from "./ChessPiece";
 import { PIECE_TYPE } from "./ChessPiece";
@@ -26,6 +26,9 @@ function ChessTile({ constructorData }) {
     const [tileColor, setTileColor] = useState(undefined);
     const [chessPieceHolding, setChessPieceHolding] = useState(null);
 
+    // Reference to itself
+    const dropDiv = useRef(null);
+
     // console.log("loading new tile!", gridPoint, chessPiece, currentState, isHoveringTile, tileColor, position);
 
     // Set the position of the chess tile (initial use effect)
@@ -35,6 +38,7 @@ function ChessTile({ constructorData }) {
         }
 
         // Validate chess piece (if there is one), plant on the tile if valid
+        // NOTE: Account for situation where sends in an empty []
         if (chessPiece !== null) {
             setCurrentState(TILE_STATE.HOLDING_PIECE);
             setChessPieceHolding(PIECE_TYPE[chessPiece.name]);
@@ -83,11 +87,54 @@ function ChessTile({ constructorData }) {
         }
     }, [currentState, chessPieceHolding]);
 
+    const pieceDroppedHandler = (event) => {
+        event.preventDefault();
+        setIsHoveringTile(false);
+
+        if (currentState !== TILE_STATE.EMPTY) {
+            console.log("Cannot place piece on occupied tile!");
+            return;
+        }
+
+        console.log("Piece Dropped!");
+        const piece = event.dataTransfer.getData("text");
+
+        console.log(piece);
+
+        // console.log(event.dataTransfer.types);
+
+        if (piece === "") {
+            throw new Error("Data has not been correctly passed into the drag start event!");
+        }
+
+        if (dropDiv === null) {
+            throw new Error("Drop reference does not exist!");
+        }
+
+        // This is where the 'moving' occurs
+        dropDiv.current.appendChild(document.getElementById(piece));
+    };
+
     return (
         <>
             <div
                 onMouseEnter={() => setIsHoveringTile(true)}
                 onMouseLeave={() => setIsHoveringTile(false)}
+                onDragEnter={(e) => {
+                    e.preventDefault();
+                    setIsHoveringTile(true);
+                    console.log("Drag Enter!");
+                }}
+                onDragLeave={(e) => {
+                    e.preventDefault();
+                    setIsHoveringTile(false);
+                    console.log("Drag Leave!");
+                }}
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    console.log("Drag Over!");
+                }}
+                onDrop={pieceDroppedHandler}
                 style={{
                     width: parentContext.tileSize,
                     height: parentContext.tileSize,
@@ -100,7 +147,7 @@ function ChessTile({ constructorData }) {
                     justifyContent: "center",
                 }}
             >
-                {generatePiece}
+                <div ref={dropDiv}>{generatePiece}</div>
                 {/* <div>piece loading</div> */}
             </div>
         </>

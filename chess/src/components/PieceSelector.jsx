@@ -47,10 +47,13 @@ function PieceSelector() {
                     display: "flex",
                     flexDirection: "row",
                     height: "2em",
+                    backgroundColor: "#333",
+                    margin: "1em",
+                    padding: ".5em",
                 }}
             >
                 {DEFAULT_CHESS_PIECE_LINEUP.map((element, index) => (
-                    <div key={index}>
+                    <div key={index} style={{ paddingLeft: ".25em", paddingRight: ".25em" }}>
                         <ChessPiece name={element.name} />
                     </div>
                 ))}
