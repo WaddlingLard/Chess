@@ -28,7 +28,10 @@ export const DEFAULT_PIECE_LAYOUT = [
 // rep of the columns to build up the whole grid
 // ALSO MUST CONSIDER ODD NUMBERED VALUES
 export const getEmptyPieceGrid = (height, width) => {
-    return Array(height / 2)
+    if (width === undefined) {
+        width = height;
+    }
+    const emptyGrid = Array(height / 2)
         .fill(null)
         .map(() => {
             return Array(width)
@@ -37,9 +40,15 @@ export const getEmptyPieceGrid = (height, width) => {
                     return [];
                 });
         });
+
+    console.log("Empty grid created!", emptyGrid);
+
+    return emptyGrid;
 };
 
-function Chessboard({ boardWidth, boardHeight, renderScale, chessPieceLayout }) {
+function Chessboard({ boardWidth, boardHeight, renderScale, chessPieceLayout, template }) {
+    const { tempPieceLayout, setTempPieceLayout } = template;
+
     const DEFAULT_TILE_SIZE = 60;
     const [dimension, setDimension] = useState({
         width: undefined,
@@ -58,22 +67,11 @@ function Chessboard({ boardWidth, boardHeight, renderScale, chessPieceLayout }) 
     const [errorMessage, setErrorMessage] = useState(undefined);
     const [errorFlag, setErrorFlag] = useState(false);
 
-    // Reset the board states if there is a new chess piece layout
-    useEffect(() => {
-        console.log("Chessboard: new layout received!", chessPieceLayout);
-        // if (gameGrid.grid != undefined) {
-        //     setGameGrid((prev) => ({ grid: [] }));
-        // }
-    }, [chessPieceLayout]);
-
     // Initialize the dimensions/size for the game board
     useEffect(() => {
         // Use default value instead if failed to pass params
         const useDefaultDimension = boardWidth === undefined || boardHeight === undefined;
         const useDefaultPieceLayout = chessPieceLayout === undefined;
-
-        // console.log(useDefaultPieceLayout, chessPieceLayout);
-
         setPieceLayout((prev) => ({
             pieceGrid: useDefaultPieceLayout ? DEFAULT_PIECE_LAYOUT : chessPieceLayout,
         }));
@@ -104,25 +102,14 @@ function Chessboard({ boardWidth, boardHeight, renderScale, chessPieceLayout }) 
         }
 
         const newGameGrid = buildGameGrid;
-
-        console.log("New game grid:", newGameGrid);
-
         const pieceGrid = pieceLayout.pieceGrid;
 
         // Does the game grid match with the piece layout dimension?
-        if (
-            newGameGrid.length / 2 !==
-            pieceGrid.length
-            // ||
-            // newGameGrid[0].length !== pieceGrid[0].length
-        ) {
+        if (newGameGrid.length / 2 !== pieceGrid.length) {
             setErrorMessage(
                 `Provided piece layout does not match up with the dimensions of the chess board ${
                     newGameGrid.length / 2
                 } !== ${pieceGrid.length}`
-                // || ${newGameGrid[0].length} !== ${
-                //     pieceGrid[0].length
-                // } (Rare bug spawn)`
             );
             setErrorFlag(true);
         }
@@ -154,9 +141,6 @@ function Chessboard({ boardWidth, boardHeight, renderScale, chessPieceLayout }) 
         const chessPieceGrid = [...pieceLayout.pieceGrid];
         let isGridReversed = false; // Used as a flag to prevent any further mutation
 
-        console.log("Passed in grid: ", grid);
-        console.log("Chess grid: ", chessPieceGrid);
-
         const isOtherTeam = (currentRow) => {
             return currentRow >= height / 2;
         };
@@ -179,12 +163,9 @@ function Chessboard({ boardWidth, boardHeight, renderScale, chessPieceLayout }) 
                         ? (chessPieceGrid.reverse(), (isGridReversed = true))
                         : null;
 
-                    const ignorePieceRow = chessPieceGrid[rowIndex % 4].length <= 1;
-                    let currentPieceRow = chessPieceGrid[rowIndex % 4];
+                    const currentRow = chessPieceGrid[rowIndex % 4];
 
-                    // Account for an empty array representing the whole row
-
-                    // console.log(currentPieceRow);
+                    const ignorePieceRow = currentRow.length !== dimension.height;
 
                     return (
                         <div
@@ -197,14 +178,23 @@ function Chessboard({ boardWidth, boardHeight, renderScale, chessPieceLayout }) 
                         >
                             {gridRow.map((tile, colIndex) => {
                                 // ALTER HERE TO CHANGE INITIAL CONSTRUCTOR DATA
-                                // console.log(colIndex);
-                                const data = {
-                                    location: tile[0],
-                                    piece: ignorePieceRow ? null : currentPieceRow[colIndex],
-                                };
+                                const data = { location: tile[0] };
 
-                                // console.log("regenerating tile!");
-                                const chessTile = <ChessTile key={colIndex} constructorData={data} />;
+                                if (ignorePieceRow) {
+                                    data.piece = null;
+                                } else {
+                                    // Check if there is a piece in the location
+                                    data.piece = currentRow[colIndex].length === 0 ? null : currentRow[colIndex];
+                                }
+
+                                console.log("New tile data!", data);
+                                const chessTile = (
+                                    <ChessTile
+                                        key={`${rowIndex}${colIndex}`}
+                                        constructorData={data}
+                                        currentGrid={{ gameGrid, setTempPieceLayout }}
+                                    />
+                                );
                                 currentGrid[rowIndex][colIndex].tileData = data;
 
                                 return chessTile;
@@ -216,9 +206,6 @@ function Chessboard({ boardWidth, boardHeight, renderScale, chessPieceLayout }) 
         );
 
         const updatedGrid = currentGrid;
-
-        console.log("Draw Board Component: ", component);
-        console.log("Draw Board Value: ", updatedGrid);
 
         return { component: component, value: updatedGrid };
     };
@@ -238,51 +225,21 @@ function Chessboard({ boardWidth, boardHeight, renderScale, chessPieceLayout }) 
         }
     }, [getMemoizedBoard]);
 
-    // Use a saved conditional to have a useEffect to store the value from
-    // the component while also generating the HTML as well.
-    // const generateBoard = () => {
-    //     if (gameGridCreated) {
-    //         console.log("Getting memoized component!");
-    //         return getMemoizedBoard.component;
-    //     }
-    //     return "bruh";
-    // };
-
-    // const generateBoard = gameGridCreated ? (getMemoizedBoard.component, console.log("getting component")) : "bruh";
-
-    // Cannot generate board until certain vals are set (check to determine if rest of code should execute)
-    // if (!dimension.valueSet) {
-    //     return null;
-    // }
-
     // Styles rules here
     const styles = {
         chessBoard: {
             width: `${tileRenderSize * dimension.width}px`,
             height: `${tileRenderSize * dimension.height}px`,
-            // width: 'fit-content',
-            // height: 'fit-content',
-            // aspectRatio: 1 / 1,
-            // margin: 'auto',
-            // padding: "5%",
             display: "grid",
             gridTemplateRows: `repeat(${dimension.height}, 1fr)`,
             padding: "1em",
-            // margin: '5%',
             borderRadius: "24px",
             borderStyle: "solid",
             borderWidth: "3px",
             borderColor: "#000",
-            // flexDirection: 'row',
             justifyContent: "center",
-            // justifySelf: 'center',
-            // alignItems: 'center',
             backgroundColor: "#55342B",
-            // overflow: 'hidden',
-            // zIndex: 2,
             boxSizing: "content-box",
-            // outline: "2px solid red",
-            // alignSelf: "center",
         },
     };
 
@@ -303,21 +260,7 @@ function Chessboard({ boardWidth, boardHeight, renderScale, chessPieceLayout }) 
     return (
         <>
             {/* Draw the board */}
-            <div
-                style={{ ...styles.chessBoard }}
-                // className='chessboard'
-            >
-                {/* {errorFlag && <p> {errorMessage} </p>} */}
-                {/* <div style={{
-                    display: 'flex',
-                    margin: 'auto'
-                }}> */}
-                {/* {gameGrid.grid.length !== 0 && drawBoard(gameGrid.grid, dimension)} */}
-
-                {getMemoizedBoard?.component || <p>Loading the board</p>}
-
-                {/* </div> */}
-            </div>
+            <div style={{ ...styles.chessBoard }}>{getMemoizedBoard?.component || <p>Loading the board</p>}</div>
         </>
     );
 }
