@@ -54,7 +54,10 @@ function PieceSelector() {
             >
                 {DEFAULT_CHESS_PIECE_LINEUP.map((element, index) => (
                     <div key={index} style={{ paddingLeft: ".25em", paddingRight: ".25em" }}>
-                        <ChessPiece name={element.name} />
+                        <ChessPiece
+                            name={element.name}
+                            // originFromPieceSelector={{ isOriginated: true, newPieceList: addedPieceIds }}
+                        />
                     </div>
                 ))}
             </div>

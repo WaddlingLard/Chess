@@ -49,6 +49,10 @@ export const getEmptyPieceGrid = (height, width) => {
 function Chessboard({ boardWidth, boardHeight, renderScale, chessPieceLayout, template }) {
     const { tempPieceLayout, setTempPieceLayout } = template;
 
+    useEffect(() => {
+        console.log("Temp piece layout changed!", tempPieceLayout);
+    }, [tempPieceLayout]);
+
     const DEFAULT_TILE_SIZE = 60;
     const [dimension, setDimension] = useState({
         width: undefined,

@@ -52,8 +52,8 @@ function ChessTile({
 
         // Again, redundant naming
         setPosition((prev) => ({
-            row: gridPoint.x,
-            col: gridPoint.y,
+            row: gridPoint.y,
+            col: gridPoint.x,
             valueSet: true,
         }));
         setTileColor((gridPoint.x + gridPoint.y) % 2 == 0 ? "#FFF" : "#000");
@@ -132,18 +132,45 @@ function ChessTile({
         setChessPieceHolding(PIECE_TYPE[data.pieceName]);
 
         // Find the location on the gameGrid
-        const updatedGrid = gameGrid.grid;
+        // Its dirty, but there are no references
+        const updatedGrid = JSON.parse(JSON.stringify(gameGrid.grid));
         const oldGridNode = updatedGrid[position.row][position.col];
-        oldGridNode.tileData.piece = PIECE_TYPE[data.pieceName];
+        oldGridNode[0] = PIECE_TYPE[data.pieceName];
         console.log("Current grid state:", gameGrid.grid);
         console.log("Updated grid state:", updatedGrid);
         console.log("Updated grid node:", oldGridNode);
+        console.log("Updated grid node pulled from grid directly", updatedGrid[position.row][position.col]);
 
         // Update the chess board
-        setTempPieceLayout((prev) => ({
-            ...prev,
-            grid: updatedGrid,
-        }));
+        setTempPieceLayout((prev) => {
+            console.log(prev);
+
+            // Get the back half of the grid and reverse
+            const normalizedGrid = updatedGrid.slice(-updatedGrid.length / 2).reverse();
+
+            console.log("Normalized grid:", normalizedGrid);
+
+            // Piece should be in the normalized grid
+            // console.log(
+            //     "Updated position: ",
+            //     normalizedGrid[position.row % (updatedGrid.length / 2)][position.col % updatedGrid.length]
+            // );
+
+            // normalizedGrid.map((row, rowIndex) => {
+            //     row.map((element, colIndex) => {
+            //         console.log("element: ", row);
+            //         row[colIndex] = row[colIndex].tileData.piece;
+            //     });
+            // });
+
+            // console.log("Updated normalized grid: ", normalizedGrid);
+
+            const newGrid = { ...prev, grid: normalizedGrid };
+
+            console.log(newGrid);
+
+            return newGrid;
+        });
 
         // Successful drop!
         // console.log(pieceElement);

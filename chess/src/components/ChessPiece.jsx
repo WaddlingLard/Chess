@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 // Importing icon libraries
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -11,6 +11,7 @@ import {
     faChessQueen,
     faChessKing,
 } from "@fortawesome/free-solid-svg-icons";
+import PieceSelector from "./PieceSelector";
 
 // prettier-ignore
 export const PIECE_TYPE = Object.freeze({
@@ -22,9 +23,26 @@ export const PIECE_TYPE = Object.freeze({
     KING:   { name: "KING",   icon: faChessKing },
 });
 
-function ChessPiece({ name, teamType }) {
+function ChessPiece({
+    name,
+    teamType,
+    // originFromPieceSelector = { isOriginated: false, newPieceList: null },
+    // drop = { validDropOccurred: false, toggleDrop: null },
+}) {
+    // Used to keep track if the chess piece came from the piece selector component
+    // const { isOriginated, newPieceList } = originFromPieceSelector;
+
     const [pieceType, setPieceType] = useState(undefined);
     const [teamAffiliation, setTeamAffiliation] = useState(undefined);
+
+    // const isTempPiece = isOriginated;
+    // const pieceSelectorList = newPieceList;
+
+    // const { validDropOccurred, toggleDrop } = drop;
+
+    // useEffect(() => {
+    //     console.log("New value of validDropOccurred!", drop.validDropOccurred);
+    // }, [drop.validDropOccurred]);
 
     // console.log("Name: ", name);
     // console.log("Team type: ", teamType);
@@ -40,14 +58,34 @@ function ChessPiece({ name, teamType }) {
     }, []);
 
     const chessPieceDataHandler = (event) => {
-        console.log("Piece has been grabbed!", event);
+        // console.log("Piece has been grabbed!", event);
 
         // Grabbing the data from the dragging event to be moved
-        event.dataTransfer.setData("text/plain", event.target.id);
-        event.dataTransfer.effectAllowed = "copy";
+        event.dataTransfer.setData(
+            "application/chess-piece",
+            JSON.stringify({ id: event.target.id, pieceName: pieceType.name })
+        );
+        event.dataTransfer.effectAllowed = "move";
 
-        console.log("Before dropping dataTransfer values: ", event.dataTransfer.getData("text"));
+        // console.log("Before dropping dataTransfer values: ", event.dataTransfer.getData("text"));
+        // console.log("Saving the dragged event");
+
+        // currentDragEvent = event;
     };
+
+    // const checkValidDropHandler = (event) => {
+    //     console.log("Checking the validity of the drop");
+    //     console.log(validDropOccurred);
+
+    //     if (validDropOccurred) {
+    //         console.log("A valid drop has occurred!");
+    //         toggleDrop();
+    //     }
+
+    //     console.log(event);
+    // };
+
+    const addToPieceListHandler = () => {};
 
     const uniqueIDGenerator = (size) => {
         let id = String("");
@@ -65,6 +103,10 @@ function ChessPiece({ name, teamType }) {
                 style={{ display: "flex", width: "100%", height: "100%" }}
                 draggable={true}
                 onDragStart={chessPieceDataHandler}
+                onDragEnd={
+                    // checkValidDropHandler
+                    addToPieceListHandler
+                }
                 id={`${uniqueIDGenerator(10)}`}
             >
                 {pieceType !== undefined && (
