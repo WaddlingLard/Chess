@@ -1,21 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
-import Chessboard, { DEFAULT_PIECE_LAYOUT } from "./Chessboard";
+import Chessboard, { DEFAULT_PIECE_LAYOUT, DEFAULT_BOARD_DIMENSION, getEmptyPieceGrid } from "./Chessboard";
 import PieceSelector, { pieceToggler } from "./PieceSelector";
+import "../css/splashscreen.css";
 
 function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
-    const titleCSS = Object.freeze({ margin: "1rem" });
-
     const [showPieceWindow, toggleWindow, clearWindow] = pieceToggler();
     const [tempPieceLayout, setTempPieceLayout] = useState({ grid: [] });
 
     // Initialize the temporary piece layout with default
     useEffect(() => {
         const useDefaultLayout = pieceSetup === undefined;
-        const newPieceGrid = useDefaultLayout
-            ? DEFAULT_PIECE_LAYOUT
-            : pieceSetup;
+        const newPieceGrid = useDefaultLayout ? DEFAULT_PIECE_LAYOUT : pieceSetup;
 
-        // console.log("New Piece Grid:", newPieceGrid);
+        // useDefaultLayout ? null : console.log("New Piece Grid:", newPieceGrid);
 
         setTempPieceLayout((prev) => ({
             ...prev,
@@ -24,7 +21,7 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
     }, []);
 
     useEffect(() => {
-        console.log("TempPieceLayout: ", tempPieceLayout);
+        // console.log("TempPieceLayout: ", tempPieceLayout);
     }, [tempPieceLayout]);
 
     const buttonHandler = () => {
@@ -36,17 +33,9 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
 
     const handlePieceWindow = () => {
         toggleWindow();
-
-        // Create the new empty grid
-        const emptyPieceGrid = Array(4)
-            .fill(null)
-            .map(() => {
-                return [];
-            });
-
         setTempPieceLayout((prev) => ({
             ...prev,
-            grid: emptyPieceGrid,
+            grid: getEmptyPieceGrid(DEFAULT_BOARD_DIMENSION),
         }));
     };
 
@@ -57,33 +46,14 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
 
     return (
         <>
-            <div
-                style={{
-                    display: "grid",
-                    // 3 Column system for (unsure, welcome message, piece setup)
-                    gridTemplateColumns: "repeat(3, 1fr)",
-                    fontSize: "2rem",
-                    textAlign: "center",
-                }}
-            >
+            <div id="main-container">
                 {/* Welcome Message */}
-                <div
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gridColumn: 2,
-                        // justifyContent: "center",
-                    }}
-                >
-                    <h1 style={{ ...titleCSS }}> Welcome to... </h1>
-                    <h2 style={{ ...titleCSS }}> CHESS! </h2>
+                <div id="welcome-container">
+                    <h1> Welcome to... </h1>
+                    <h2> CHESS! </h2>
 
                     <button
-                        style={{
-                            width: "fit-content",
-                            padding: ".5em",
-                            alignSelf: "center",
-                        }}
+                        id="start-button"
                         onClick={() => {
                             buttonHandler();
                         }}
@@ -93,39 +63,13 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
                 </div>
 
                 {/* Piece Setup */}
-                <div
-                    style={{
-                        fontSize: ".5em",
-                        gridColumn: 3,
-                        // position: "",
-                    }}
-                >
+                <div id="piece-setup-container">
                     <h2>Piece Layout</h2>
                     <p>Setup your board. Choose your pieces!</p>
 
                     {/* Example Board */}
-                    <div
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            // position: "relative",
-                            // justifyContent: "center",
-                            alignItems: "center",
-                            margin: "auto",
-                            width: "fit-content",
-                            height: "fit-content",
-                        }}
-                    >
-                        <p
-                            style={{
-                                display: "inline-block",
-                                backgroundColor: "#333",
-                                width: "fit-content",
-                                margin: 0,
-                            }}
-                        >
-                            Example Board
-                        </p>
+                    <div id="example-board-container">
+                        <p id="board-subtitle-text">Example Board</p>
                         <div
                             style={{
                                 position: "relative",
@@ -133,60 +77,50 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
                                 height: "inherit",
                             }}
                         >
-                            {showPieceWindow && (
-                                <div
-                                    style={{
-                                        position: "absolute",
-                                        top: 0,
-                                        width: "100%",
-                                        height: "50%",
-                                        // inset: "50% 0%",
-                                        opacity: 0.8,
-                                        borderRadius: "24px 24px 0px 0px",
-                                        border: "2px black dotted",
-                                        backgroundColor: "#333",
-                                        boxSizing: "border-box",
-                                    }}
-                                ></div>
-                            )}
+                            {showPieceWindow && <div id="board-half-cover"></div>}
+                            {!showPieceWindow && <div id="board-full-cover"></div>}
+
                             <Chessboard
                                 // ref={chessBoardRef}
                                 renderScale={0.5}
                                 chessPieceLayout={tempPieceLayout.grid}
                             />
                         </div>
-                        <div
-                            style={{
-                                width: "100%",
-                                display: "flex",
-                                justifyContent: "space-around",
-                                flex: 1,
-                            }}
-                        >
+                        <div id="chess-layout-button-container">
                             <button
                                 onClick={() => {
-                                    clearWindow();
+                                    showPieceWindow ? clearWindow() : null;
                                     setTempPieceLayout((prev) => ({
                                         ...prev,
                                         grid: DEFAULT_PIECE_LAYOUT,
                                     }));
                                 }}
                             >
-                                Default
+                                Load Default
                             </button>
                             <button
                                 onClick={() => {
                                     handlePieceWindow();
                                 }}
+                                disabled={showPieceWindow}
                             >
                                 Customize!
                             </button>
                         </div>
 
                         {showPieceWindow && (
-                            <div style={{ fontSize: "1em" }}>
-                                <PieceSelector />
-                            </div>
+                            <>
+                                <div style={{ fontSize: "1em" }}>
+                                    <PieceSelector />
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        confirmPieceLayout();
+                                    }}
+                                >
+                                    Confirm
+                                </button>
+                            </>
                         )}
                     </div>
                 </div>
