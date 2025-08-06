@@ -1,11 +1,17 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import Chessboard, { DEFAULT_PIECE_LAYOUT, DEFAULT_BOARD_DIMENSION, getEmptyPieceGrid } from "./Chessboard";
 import PieceSelector, { pieceToggler } from "./PieceSelector";
 import "../css/splashscreen.css";
+import { BoardContext } from "../ChessApp";
 
 function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
     const [showPieceWindow, toggleWindow, clearWindow] = pieceToggler();
-    const [tempPieceLayout, setTempPieceLayout] = useState({ grid: [] });
+    const [tempPieceLayout, setTempPieceLayout] = useState({
+        grid: getEmptyPieceGrid(DEFAULT_BOARD_DIMENSION),
+    });
+
+    const parentBoardContext = useContext(BoardContext);
+    const { globalPieceLayout, setGlobalPieceLayout } = parentBoardContext;
 
     // Initialize the temporary piece layout with default
     useEffect(() => {
@@ -14,7 +20,7 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
 
         // useDefaultLayout ? null : console.log("New Piece Grid:", newPieceGrid);
 
-        setTempPieceLayout((prev) => ({
+        setGlobalPieceLayout((prev) => ({
             ...prev,
             grid: newPieceGrid,
         }));
@@ -33,11 +39,13 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
 
     const handlePieceWindow = () => {
         toggleWindow();
-        setTempPieceLayout((prev) => ({
+        setGlobalPieceLayout((prev) => ({
             ...prev,
             grid: getEmptyPieceGrid(DEFAULT_BOARD_DIMENSION),
         }));
     };
+
+    const confirmPieceLayout = () => {};
 
     // Guard to finish updating state
     if (tempPieceLayout.grid.length === 0) {
@@ -83,14 +91,15 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
                             <Chessboard
                                 // ref={chessBoardRef}
                                 renderScale={0.5}
-                                chessPieceLayout={tempPieceLayout.grid}
+                                chessPieceLayout={globalPieceLayout.grid}
+                                template={{ tempPieceLayout, setTempPieceLayout }}
                             />
                         </div>
                         <div id="chess-layout-button-container">
                             <button
                                 onClick={() => {
                                     showPieceWindow ? clearWindow() : null;
-                                    setTempPieceLayout((prev) => ({
+                                    setGlobalPieceLayout((prev) => ({
                                         ...prev,
                                         grid: DEFAULT_PIECE_LAYOUT,
                                     }));
