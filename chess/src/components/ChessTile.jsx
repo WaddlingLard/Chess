@@ -9,10 +9,15 @@ const TILE_STATE = Object.freeze({
     IN_CHECK: "IN_CHECK",
 });
 
-function ChessTile({ constructorData }) {
+function ChessTile({
+    constructorData = { location: { x: 0, y: 0 }, piece: null },
+    currentGrid = { gameGrid: { grid: [] }, setTempPieceLayout: null },
+}) {
+    const { gameGrid, setTempPieceLayout } = currentGrid;
+
     const gridPoint = constructorData.location;
     const chessPiece = constructorData.piece;
-    // Add more variables for constructorData if needed'
+    // Add more variables for constructorData if needed
 
     const parentContext = useContext(TileContext);
 
@@ -28,6 +33,7 @@ function ChessTile({ constructorData }) {
 
     // Reference to itself
     const dropDiv = useRef(null);
+    // const [validDropOccurred, setValidDropOccurred] = useState(false);
 
     // console.log("loading new tile!", gridPoint, chessPiece, currentState, isHoveringTile, tileColor, position);
 
@@ -64,6 +70,10 @@ function ChessTile({ constructorData }) {
         }
     }, [chessPiece]);
 
+    // const toggleDrop = () => {
+    //     setValidDropOccurred(!validDropOccurred);
+    // };
+
     const generatePiece = useMemo(() => {
         if (currentState === TILE_STATE.EMPTY) {
             // console.log("Returning null!");
@@ -74,7 +84,10 @@ function ChessTile({ constructorData }) {
         try {
             return (
                 <>
-                    <ChessPiece name={chessPieceHolding.name} />
+                    <ChessPiece
+                        name={chessPieceHolding.name}
+                        // drop={{ validDropOccurred, toggleDrop }}
+                    />
                 </>
             );
         } catch (TypeError) {
@@ -82,10 +95,13 @@ function ChessTile({ constructorData }) {
             console.log("CurrentState: ", currentState);
             console.log("Position: ", position);
             console.log("ConstructorData: ", constructorData);
-
             console.trace();
         }
-    }, [currentState, chessPieceHolding]);
+    }, [
+        currentState,
+        chessPieceHolding,
+        // validDropOccurred
+    ]);
 
     const pieceDroppedHandler = (event) => {
         event.preventDefault();
@@ -96,12 +112,8 @@ function ChessTile({ constructorData }) {
             return;
         }
 
-        console.log("Piece Dropped!");
-        const piece = event.dataTransfer.getData("text");
-
-        console.log(piece);
-
-        // console.log(event.dataTransfer.types);
+        const piece = event.dataTransfer.getData("application/chess-piece");
+        const data = JSON.parse(piece);
 
         if (piece === "") {
             throw new Error("Data has not been correctly passed into the drag start event!");
@@ -112,7 +124,31 @@ function ChessTile({ constructorData }) {
         }
 
         // This is where the 'moving' occurs
-        dropDiv.current.appendChild(document.getElementById(piece));
+        const pieceElement = document.getElementById(data.id);
+        // dropDiv.current.appendChild(pieceElement);
+
+        // setValidDropOccurred(true);
+        setCurrentState(TILE_STATE.HOLDING_PIECE);
+        setChessPieceHolding(PIECE_TYPE[data.pieceName]);
+
+        // Find the location on the gameGrid
+        const updatedGrid = gameGrid.grid;
+        const oldGridNode = updatedGrid[position.row][position.col];
+        oldGridNode.tileData.piece = PIECE_TYPE[data.pieceName];
+        console.log("Current grid state:", gameGrid.grid);
+        console.log("Updated grid state:", updatedGrid);
+        console.log("Updated grid node:", oldGridNode);
+
+        // Update the chess board
+        setTempPieceLayout((prev) => ({
+            ...prev,
+            grid: updatedGrid,
+        }));
+
+        // Successful drop!
+        // console.log(pieceElement);
+        // Save the valid transition to the event
+        // event.dataTransfer.setData("application/json", JSON.stringify({ validTransfer: true }));
     };
 
     return (
@@ -123,16 +159,16 @@ function ChessTile({ constructorData }) {
                 onDragEnter={(e) => {
                     e.preventDefault();
                     setIsHoveringTile(true);
-                    console.log("Drag Enter!");
+                    // console.log("Drag Enter!");
                 }}
                 onDragLeave={(e) => {
                     e.preventDefault();
                     setIsHoveringTile(false);
-                    console.log("Drag Leave!");
+                    // console.log("Drag Leave!");
                 }}
                 onDragOver={(e) => {
                     e.preventDefault();
-                    console.log("Drag Over!");
+                    // console.log("Drag Over!");
                 }}
                 onDrop={pieceDroppedHandler}
                 style={{
