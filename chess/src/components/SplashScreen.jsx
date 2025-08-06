@@ -27,7 +27,7 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
     }, []);
 
     useEffect(() => {
-        // console.log("TempPieceLayout: ", tempPieceLayout);
+        console.log("TempPieceLayout: ", tempPieceLayout);
     }, [tempPieceLayout]);
 
     const buttonHandler = () => {
@@ -35,6 +35,17 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
 
         // Start the game!
         setGameStarter(true);
+    };
+
+    const loadDefaultHandler = () => {
+        showPieceWindow ? clearWindow() : null;
+        setGlobalPieceLayout((prev) => ({
+            ...prev,
+            grid: DEFAULT_PIECE_LAYOUT,
+        }));
+        setTempPieceLayout((prev) => ({
+            grid: getEmptyPieceGrid(DEFAULT_BOARD_DIMENSION),
+        }));
     };
 
     const handlePieceWindow = () => {
@@ -98,11 +109,7 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
                         <div id="chess-layout-button-container">
                             <button
                                 onClick={() => {
-                                    showPieceWindow ? clearWindow() : null;
-                                    setGlobalPieceLayout((prev) => ({
-                                        ...prev,
-                                        grid: DEFAULT_PIECE_LAYOUT,
-                                    }));
+                                    loadDefaultHandler();
                                 }}
                             >
                                 Load Default

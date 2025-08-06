@@ -11,9 +11,9 @@ const TILE_STATE = Object.freeze({
 
 function ChessTile({
     constructorData = { location: { x: 0, y: 0 }, piece: null },
-    currentGrid = { gameGrid: { grid: [] }, setTempPieceLayout: null },
+    templateGrid = { tempPieceLayout: { grid: [] }, setTempPieceLayout: null },
 }) {
-    const { gameGrid, setTempPieceLayout } = currentGrid;
+    const { tempPieceLayout, setTempPieceLayout } = templateGrid;
 
     const gridPoint = constructorData.location;
     const chessPiece = constructorData.piece;
@@ -128,27 +128,35 @@ function ChessTile({
         // dropDiv.current.appendChild(pieceElement);
 
         // setValidDropOccurred(true);
-        setCurrentState(TILE_STATE.HOLDING_PIECE);
-        setChessPieceHolding(PIECE_TYPE[data.pieceName]);
 
-        // Find the location on the gameGrid
-        // Its dirty, but there are no references
-        const updatedGrid = JSON.parse(JSON.stringify(gameGrid.grid));
-        const oldGridNode = updatedGrid[position.row][position.col];
-        oldGridNode[0] = PIECE_TYPE[data.pieceName];
-        console.log("Current grid state:", gameGrid.grid);
-        console.log("Updated grid state:", updatedGrid);
+        const updatedGrid = tempPieceLayout.grid;
+
+        console.log("Grid template before update: ", updatedGrid);
+        // Getting the location of the piece normalized to a template board (half the height of a normal grid)
+        console.log("Coordinate positions: ", position.row % tempPieceLayout.grid.length, position.col);
+        const oldGridNode = updatedGrid[position.row % tempPieceLayout.grid.length][position.col];
+
+        if (oldGridNode.length !== 0) {
+            console.log("ABORTING! TILE IS ALREADY OCCUPIED!");
+            return null;
+        }
+
+        oldGridNode.push(PIECE_TYPE[data.pieceName]);
+        console.log("Updated template grid state:", updatedGrid);
         console.log("Updated grid node:", oldGridNode);
-        console.log("Updated grid node pulled from grid directly", updatedGrid[position.row][position.col]);
+        console.log(
+            "Updated grid node pulled from grid directly",
+            updatedGrid[position.row % tempPieceLayout.grid.length][position.col]
+        );
 
         // Update the chess board
         setTempPieceLayout((prev) => {
             console.log(prev);
 
-            // Get the back half of the grid and reverse
-            const normalizedGrid = updatedGrid.slice(-updatedGrid.length / 2).reverse();
+            // Reverse the grid to get mirrored layout
+            // const normalizedGrid = updatedGrid.reverse();
 
-            console.log("Normalized grid:", normalizedGrid);
+            // console.log("Normalized grid:", normalizedGrid);
 
             // Piece should be in the normalized grid
             // console.log(
@@ -165,13 +173,15 @@ function ChessTile({
 
             // console.log("Updated normalized grid: ", normalizedGrid);
 
-            const newGrid = { ...prev, grid: normalizedGrid };
+            const newGrid = { ...prev, grid: updatedGrid };
 
             console.log(newGrid);
 
             return newGrid;
         });
 
+        setCurrentState(TILE_STATE.HOLDING_PIECE);
+        setChessPieceHolding(PIECE_TYPE[data.pieceName]);
         // Successful drop!
         // console.log(pieceElement);
         // Save the valid transition to the event

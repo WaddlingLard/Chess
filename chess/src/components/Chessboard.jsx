@@ -196,7 +196,7 @@ function Chessboard({ boardWidth, boardHeight, renderScale, chessPieceLayout, te
                                     <ChessTile
                                         key={`${rowIndex}${colIndex}`}
                                         constructorData={data}
-                                        currentGrid={{ gameGrid, setTempPieceLayout }}
+                                        templateGrid={{ tempPieceLayout, setTempPieceLayout }}
                                     />
                                 );
                                 currentGrid[rowIndex][colIndex].tileData = data;
