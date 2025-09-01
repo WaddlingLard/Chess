@@ -26,6 +26,7 @@ function ChessTile({
         col: undefined,
         valueSet: false,
     });
+    
     const [currentState, setCurrentState] = useState(TILE_STATE.EMPTY);
     const [isHoveringTile, setIsHoveringTile] = useState(false);
     const [tileColor, setTileColor] = useState(undefined);
@@ -46,6 +47,7 @@ function ChessTile({
         // Validate chess piece (if there is one), plant on the tile if valid
         // NOTE: Account for situation where sends in an empty []
         if (chessPiece !== null) {
+            console.log("Initializing Piece!");
             setCurrentState(TILE_STATE.HOLDING_PIECE);
             setChessPieceHolding(PIECE_TYPE[chessPiece.name]);
         }
@@ -61,13 +63,24 @@ function ChessTile({
 
     // Resetting tile state if new chessPiece
     useEffect(() => {
+        console.log("Setting new chesspiece!", chessPiece);
+        let piece = chessPiece;
+
         if (chessPiece === null) {
             setCurrentState(TILE_STATE.EMPTY);
             setChessPieceHolding(null);
-        } else {
-            setCurrentState(TILE_STATE.HOLDING_PIECE);
-            setChessPieceHolding(PIECE_TYPE[chessPiece.name]);
+            return;
+        } 
+        
+        console.log("Piece is not null!", PIECE_TYPE[chessPiece.name]);
+        
+        if (Array.isArray(piece)) {
+            piece = piece[0];
         }
+
+        setCurrentState(TILE_STATE.HOLDING_PIECE);
+        setChessPieceHolding(PIECE_TYPE[piece.name]);
+
     }, [chessPiece]);
 
     // const toggleDrop = () => {
@@ -91,10 +104,12 @@ function ChessTile({
                 </>
             );
         } catch (TypeError) {
+            console.error(TypeError);
             console.log("Values at time of error:");
             console.log("CurrentState: ", currentState);
             console.log("Position: ", position);
             console.log("ConstructorData: ", constructorData);
+            console.log("Chess Piece Holding", chessPieceHolding === null);
             console.trace();
         }
     }, [
@@ -154,7 +169,9 @@ function ChessTile({
             console.log(prev);
 
             // Reverse the grid to get mirrored layout
-            // const normalizedGrid = updatedGrid.reverse();
+            const normalizedGrid = updatedGrid.toReversed();
+
+            console.log(Object.is(prev, normalizedGrid));
 
             // console.log("Normalized grid:", normalizedGrid);
 
@@ -173,7 +190,7 @@ function ChessTile({
 
             // console.log("Updated normalized grid: ", normalizedGrid);
 
-            const newGrid = { ...prev, grid: updatedGrid };
+            const newGrid = { ...prev, grid: normalizedGrid };
 
             console.log(newGrid);
 
