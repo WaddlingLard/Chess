@@ -101,7 +101,7 @@ function ChessPiece({
         <>
             <div
                 style={{ display: "flex", width: "100%", height: "100%" }}
-                draggable={true}
+                draggable={false}
                 onDragStart={chessPieceDataHandler}
                 onDragEnd={
                     // checkValidDropHandler

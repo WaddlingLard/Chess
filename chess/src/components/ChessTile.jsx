@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useMemo, useRef } from "react";
-import { TileContext } from "./Chessboard";
+import { DEFAULT_TILE_SIZE, TileContext } from "./Chessboard";
 import ChessPiece from "./ChessPiece";
 import { PIECE_TYPE } from "./ChessPiece";
 
@@ -11,16 +11,16 @@ const TILE_STATE = Object.freeze({
 
 function ChessTile({
     constructorData = { location: { x: 0, y: 0 }, piece: null },
-    templateGrid = { tempPieceLayout: { grid: [] }, setTempPieceLayout: null },
+    // templateGrid = { tempPieceLayout: { grid: [] }, setTempPieceLayout: null },
 }) {
     
-    const { tempPieceLayout, setTempPieceLayout } = templateGrid;
+    // const { tempPieceLayout, setTempPieceLayout } = templateGrid;
 
     const gridPoint = constructorData.location;
     const chessPiece = constructorData.piece;
     // Add more variables for constructorData if needed
 
-    const parentContext = useContext(TileContext);
+    // const parentContext = useContext(TileContext);
 
     const [position, setPosition] = useState({
         row: undefined,
@@ -119,113 +119,117 @@ function ChessTile({
         // validDropOccurred
     ]);
 
-    const pieceDroppedHandler = (event) => {
-        event.preventDefault();
-        setIsHoveringTile(false);
+    // const pieceDroppedHandler = (event) => {
+    //     event.preventDefault();
+    //     setIsHoveringTile(false);
 
-        if (currentState !== TILE_STATE.EMPTY) {
-            console.log("Cannot place piece on occupied tile!");
-            return;
-        }
+    //     if (currentState !== TILE_STATE.EMPTY) {
+    //         console.log("Cannot place piece on occupied tile!");
+    //         return;
+    //     }
 
-        const piece = event.dataTransfer.getData("application/chess-piece");
-        const data = JSON.parse(piece);
+    //     const piece = event.dataTransfer.getData("application/chess-piece");
+    //     const data = JSON.parse(piece);
 
-        if (piece === "") {
-            throw new Error("Data has not been correctly passed into the drag start event!");
-        }
+    //     if (piece === "") {
+    //         throw new Error("Data has not been correctly passed into the drag start event!");
+    //     }
 
-        if (dropDiv === null) {
-            throw new Error("Drop reference does not exist!");
-        }
+    //     if (dropDiv === null) {
+    //         throw new Error("Drop reference does not exist!");
+    //     }
 
-        // This is where the 'moving' occurs
-        const pieceElement = document.getElementById(data.id);
-        // dropDiv.current.appendChild(pieceElement);
+    //     // This is where the 'moving' occurs
+    //     const pieceElement = document.getElementById(data.id);
+    //     // dropDiv.current.appendChild(pieceElement);
 
-        // setValidDropOccurred(true);
+    //     // setValidDropOccurred(true);
 
-        const updatedGrid = tempPieceLayout.grid;
+    //     const updatedGrid = tempPieceLayout.grid;
 
-        console.log("Grid template before update: ", updatedGrid);
-        // Getting the location of the piece normalized to a template board (half the height of a normal grid)
-        console.log("Coordinate positions: ", position.row % tempPieceLayout.grid.length, position.col);
-        const oldGridNode = updatedGrid[position.row % tempPieceLayout.grid.length][position.col];
+    //     console.log("Grid template before update: ", updatedGrid);
+    //     // Getting the location of the piece normalized to a template board (half the height of a normal grid)
+    //     console.log("Coordinate positions: ", position.row % tempPieceLayout.grid.length, position.col);
+    //     const oldGridNode = updatedGrid[position.row % tempPieceLayout.grid.length][position.col];
 
-        if (oldGridNode.length !== 0) {
-            console.log("ABORTING! TILE IS ALREADY OCCUPIED!");
-            return null;
-        }
+    //     if (oldGridNode.length !== 0) {
+    //         console.log("ABORTING! TILE IS ALREADY OCCUPIED!");
+    //         return null;
+    //     }
 
-        oldGridNode.push(PIECE_TYPE[data.pieceName]);
-        console.log("Updated template grid state:", updatedGrid);
-        console.log("Updated grid node:", oldGridNode);
-        console.log(
-            "Updated grid node pulled from grid directly",
-            updatedGrid[position.row % tempPieceLayout.grid.length][position.col]
-        );
+    //     oldGridNode.push(PIECE_TYPE[data.pieceName]);
+    //     console.log("Updated template grid state:", updatedGrid);
+    //     console.log("Updated grid node:", oldGridNode);
+    //     console.log(
+    //         "Updated grid node pulled from grid directly",
+    //         updatedGrid[position.row % tempPieceLayout.grid.length][position.col]
+    //     );
 
-        // Update the chess board
-        setTempPieceLayout((prev) => {
-            console.log(prev);
+    //     // Update the chess board
+    //     setTempPieceLayout((prev) => {
+    //         console.log(prev);
 
-            // Reverse the grid to get mirrored layout
-            const normalizedGrid = updatedGrid.toReversed();
+    //         // Reverse the grid to get mirrored layout
+    //         const normalizedGrid = updatedGrid.toReversed();
 
-            console.log(Object.is(prev, normalizedGrid));
+    //         console.log(Object.is(prev, normalizedGrid));
 
-            // console.log("Normalized grid:", normalizedGrid);
+    //         // console.log("Normalized grid:", normalizedGrid);
 
-            // Piece should be in the normalized grid
-            // console.log(
-            //     "Updated position: ",
-            //     normalizedGrid[position.row % (updatedGrid.length / 2)][position.col % updatedGrid.length]
-            // );
+    //         // Piece should be in the normalized grid
+    //         // console.log(
+    //         //     "Updated position: ",
+    //         //     normalizedGrid[position.row % (updatedGrid.length / 2)][position.col % updatedGrid.length]
+    //         // );
 
-            // normalizedGrid.map((row, rowIndex) => {
-            //     row.map((element, colIndex) => {
-            //         console.log("element: ", row);
-            //         row[colIndex] = row[colIndex].tileData.piece;
-            //     });
-            // });
+    //         // normalizedGrid.map((row, rowIndex) => {
+    //         //     row.map((element, colIndex) => {
+    //         //         console.log("element: ", row);
+    //         //         row[colIndex] = row[colIndex].tileData.piece;
+    //         //     });
+    //         // });
 
-            // console.log("Updated normalized grid: ", normalizedGrid);
+    //         // console.log("Updated normalized grid: ", normalizedGrid);
 
-            const newGrid = { ...prev, grid: normalizedGrid };
+    //         const newGrid = { ...prev, grid: normalizedGrid };
 
-            console.log(newGrid);
+    //         console.log(newGrid);
 
-            return newGrid;
-        });
+    //         return newGrid;
+    //     });
 
-        setCurrentState(TILE_STATE.HOLDING_PIECE);
-        setChessPieceHolding(PIECE_TYPE[data.pieceName]);
-        // Successful drop!
-        // console.log(pieceElement);
-        // Save the valid transition to the event
-        // event.dataTransfer.setData("application/json", JSON.stringify({ validTransfer: true }));
-    };
+    //     setCurrentState(TILE_STATE.HOLDING_PIECE);
+    //     setChessPieceHolding(PIECE_TYPE[data.pieceName]);
+    //     // Successful drop!
+    //     // console.log(pieceElement);
+    //     // Save the valid transition to the event
+    //     // event.dataTransfer.setData("application/json", JSON.stringify({ validTransfer: true }));
+    // };
 
     return (
         <>
             <div
                 onMouseEnter={() => setIsHoveringTile(true)}
                 onMouseLeave={() => setIsHoveringTile(false)}
-                onDragEnter={(e) => {
-                    e.preventDefault();
-                    setIsHoveringTile(true);
-                }}
-                onDragLeave={(e) => {
-                    e.preventDefault();
-                    setIsHoveringTile(false);
-                }}
-                onDragOver={(e) => {
-                    e.preventDefault();
-                }}
-                onDrop={pieceDroppedHandler}
+                
+                // onDragEnter={(e) => {
+                //     e.preventDefault();
+                //     setIsHoveringTile(true);
+                // }}
+                // onDragLeave={(e) => {
+                //     e.preventDefault();
+                //     setIsHoveringTile(false);
+                // }}
+                // onDragOver={(e) => {
+                //     e.preventDefault();
+                // }}
+                // onDrop={pieceDroppedHandler}
+                
                 style={{
-                    width: parentContext.tileSize,
-                    height: parentContext.tileSize,
+                    // width: parentContext.tileSize,
+                    // height: parentContext.tileSize,
+                    width: `${DEFAULT_TILE_SIZE}px`,
+                    height: `${DEFAULT_TILE_SIZE}px`,
                     backgroundColor: isHoveringTile ? "#B4D5FF" : tileColor,
                     transitionDuration: "300ms",
                     transitionProperty: "background-color",
