@@ -2,10 +2,7 @@ import { useState, createContext } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
-import Chessboard, {
-    DEFAULT_BOARD_DIMENSION,
-    DEFAULT_PIECE_LAYOUT,
-} from "./components/Chessboard";
+import Chessboard, { DEFAULT_BOARD_DIMENSION, DEFAULT_PIECE_LAYOUT, getEmptyPieceGrid } from "./components/Chessboard";
 import SplashScreen from "./components/SplashScreen";
 
 export const BoardContext = createContext();
@@ -13,10 +10,11 @@ export const BoardContext = createContext();
 function ChessApp() {
     const [isGameStarted, setIsGameStarted] = useState(false);
     const [globalPieceLayout, setGlobalPieceLayout] = useState({
-        grid: [...DEFAULT_PIECE_LAYOUT],
+        grid: DEFAULT_PIECE_LAYOUT,
     });
 
     // Default dimensions for a chess board
+    // NOTE: NEED TO HAVE DYNAMIC ADJUSTMENT FROM THIS STATE
     const [boardDimension, setBoardDimension] = useState({
         width: DEFAULT_BOARD_DIMENSION,
         height: DEFAULT_BOARD_DIMENSION,
@@ -27,31 +25,6 @@ function ChessApp() {
             <header>
                 <title>Chess!</title>
             </header>
-
-            {/* <div>
-                <a href="https://vite.dev" target="_blank">
-                    <img src={viteLogo} className="logo" alt="Vite logo" />
-                </a>
-                <a href="https://react.dev" target="_blank">
-                    <img
-                        src={reactLogo}
-                        className="logo react"
-                        alt="React logo"
-                    />
-                </a>
-            </div>
-            <h1>Vite + React</h1>
-            <div className="card">
-                <button onClick={() => setCount((count) => count + 1)}>
-                    count is {count}
-                </button>
-                <p>
-                    Edit <code>src/App.jsx</code> and save to test HMR
-                </p>
-            </div>
-            <p className="read-the-docs">
-                Click on the Vite and React logos to learn more
-            </p> */}
 
             <BoardContext value={{ globalPieceLayout, setGlobalPieceLayout }}>
                 {!isGameStarted && (

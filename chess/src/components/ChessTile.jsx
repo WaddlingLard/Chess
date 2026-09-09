@@ -13,6 +13,7 @@ function ChessTile({
     constructorData = { location: { x: 0, y: 0 }, piece: null },
     templateGrid = { tempPieceLayout: { grid: [] }, setTempPieceLayout: null },
 }) {
+    
     const { tempPieceLayout, setTempPieceLayout } = templateGrid;
 
     const gridPoint = constructorData.location;
@@ -213,16 +214,13 @@ function ChessTile({
                 onDragEnter={(e) => {
                     e.preventDefault();
                     setIsHoveringTile(true);
-                    // console.log("Drag Enter!");
                 }}
                 onDragLeave={(e) => {
                     e.preventDefault();
                     setIsHoveringTile(false);
-                    // console.log("Drag Leave!");
                 }}
                 onDragOver={(e) => {
                     e.preventDefault();
-                    // console.log("Drag Over!");
                 }}
                 onDrop={pieceDroppedHandler}
                 style={{
@@ -238,7 +236,6 @@ function ChessTile({
                 }}
             >
                 <div ref={dropDiv}>{generatePiece}</div>
-                {/* <div>piece loading</div> */}
             </div>
         </>
     );

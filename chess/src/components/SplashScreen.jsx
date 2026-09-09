@@ -5,6 +5,7 @@ import "../css/splashscreen.css";
 import { BoardContext } from "../ChessApp";
 
 function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
+
     const [showPieceWindow, toggleWindow, clearWindow] = pieceToggler();
     const [tempPieceLayout, setTempPieceLayout] = useState({
         grid: getEmptyPieceGrid(DEFAULT_BOARD_DIMENSION),
@@ -26,37 +27,39 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
         }));
     }, []);
 
-    useEffect(() => {
-        console.log("TempPieceLayout: ", tempPieceLayout);
-    }, [tempPieceLayout]);
+    // useEffect(() => {
+    //     console.log("TempPieceLayout: ", tempPieceLayout);
+    // }, [tempPieceLayout]);
 
-    const buttonHandler = () => {
-        // Form checking
+    // const buttonHandler = () => {
 
-        // Start the game!
-        setGameStarter(true);
-    };
+    //     // Start the game!
+    //     setGameStarter(true);
+    // };
 
-    const loadDefaultHandler = () => {
-        showPieceWindow ? clearWindow() : null;
-        setGlobalPieceLayout((prev) => ({
-            ...prev,
-            grid: DEFAULT_PIECE_LAYOUT,
-        }));
-        setTempPieceLayout((prev) => ({
-            grid: getEmptyPieceGrid(DEFAULT_BOARD_DIMENSION),
-        }));
-    };
+    // NOTE: Used for the piece layout module
+    // const handlePieceWindow = (loadEmptyGrid = false) => {
+    //     if (!loadEmptyGrid) {
+    //         toggleWindow();
+    //     }
 
-    const handlePieceWindow = () => {
-        toggleWindow();
-        setGlobalPieceLayout((prev) => ({
-            ...prev,
-            grid: getEmptyPieceGrid(DEFAULT_BOARD_DIMENSION),
-        }));
-    };
+    //     setTempPieceLayout((prev) => ({
+    //         grid: getEmptyPieceGrid(DEFAULT_BOARD_DIMENSION),
+    //     }));
+    //     setGlobalPieceLayout((prev) => ({
+    //         ...prev,
+    //         grid: loadEmptyGrid ? DEFAULT_PIECE_LAYOUT : getEmptyPieceGrid(DEFAULT_BOARD_DIMENSION),
+    //     }));
+    // };
 
-    const confirmPieceLayout = () => {};
+    // const confirmPieceLayout = () => {
+    //     // toggleWindow();
+    //     clearWindow();
+    //     setGlobalPieceLayout((prev) => ({
+    //         ...prev,
+    //         grid: tempPieceLayout.grid,
+    //     }));
+    // };
 
     // Guard to finish updating state
     if (tempPieceLayout.grid.length === 0) {
@@ -74,7 +77,7 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
                     <button
                         id="start-button"
                         onClick={() => {
-                            buttonHandler();
+                            setGameStarter(true);
                         }}
                     >
                         Start the game!
@@ -83,62 +86,7 @@ function SplashScreen({ setGameStarter, boardDimension, pieceSetup }) {
 
                 {/* Piece Setup */}
                 <div id="piece-setup-container">
-                    <h2>Piece Layout</h2>
-                    <p>Setup your board. Choose your pieces!</p>
-
-                    {/* Example Board */}
-                    <div id="example-board-container">
-                        <p id="board-subtitle-text">Example Board</p>
-                        <div
-                            style={{
-                                position: "relative",
-                                width: "inherit",
-                                height: "inherit",
-                            }}
-                        >
-                            {showPieceWindow && <div id="board-half-cover"></div>}
-                            {!showPieceWindow && <div id="board-full-cover"></div>}
-
-                            <Chessboard
-                                // ref={chessBoardRef}
-                                renderScale={0.5}
-                                chessPieceLayout={globalPieceLayout.grid}
-                                template={{ tempPieceLayout, setTempPieceLayout }}
-                            />
-                        </div>
-                        <div id="chess-layout-button-container">
-                            <button
-                                onClick={() => {
-                                    loadDefaultHandler();
-                                }}
-                            >
-                                Load Default
-                            </button>
-                            <button
-                                onClick={() => {
-                                    handlePieceWindow();
-                                }}
-                                disabled={showPieceWindow}
-                            >
-                                Customize!
-                            </button>
-                        </div>
-
-                        {showPieceWindow && (
-                            <>
-                                <div style={{ fontSize: "1em" }}>
-                                    <PieceSelector />
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        confirmPieceLayout();
-                                    }}
-                                >
-                                    Confirm
-                                </button>
-                            </>
-                        )}
-                    </div>
+                    
                 </div>
             </div>
         </>

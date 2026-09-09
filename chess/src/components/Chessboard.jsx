@@ -46,12 +46,19 @@ export const getEmptyPieceGrid = (height, width) => {
     return emptyGrid;
 };
 
-function Chessboard({ boardWidth, boardHeight, renderScale, chessPieceLayout, template }) {
+function Chessboard({
+    boardWidth,
+    boardHeight,
+    renderScale,
+    chessPieceLayout,
+    template = { tempPieceLayout: getEmptyPieceGrid(DEFAULT_BOARD_DIMENSION), setTempPieceLayout: null },
+}) {
+    
     const { tempPieceLayout, setTempPieceLayout } = template;
 
-    useEffect(() => {
-        console.log("Temp piece layout changed!", tempPieceLayout);
-    }, [tempPieceLayout]);
+    // useEffect(() => {
+    //     console.log("Temp piece layout changed!", tempPieceLayout);
+    // }, [tempPieceLayout]);
 
     const DEFAULT_TILE_SIZE = 60;
     const [dimension, setDimension] = useState({
@@ -189,9 +196,10 @@ function Chessboard({ boardWidth, boardHeight, renderScale, chessPieceLayout, te
                                 } else {
                                     // Check if there is a piece in the location
                                     data.piece = currentRow[colIndex].length === 0 ? null : currentRow[colIndex];
+                                    // data.piece = chessPiece == null ? null : chessPiece[0];
                                 }
 
-                                console.log("New tile data!", data);
+                                // console.log("New tile data!", data);
                                 const chessTile = (
                                     <ChessTile
                                         key={`${rowIndex}${colIndex}`}

@@ -1,0 +1,58 @@
+Reinsert back into the SplashScreen when available
+
+<!-- <h2>Piece Layout</h2>
+<p>Setup your board. Choose your pieces!</p>
+
+{/* Example Board */}
+<div id="example-board-container">
+    <p id="board-subtitle-text">Example Board</p>
+    <div
+        style={{
+            position: "relative",
+            width: "inherit",
+            height: "inherit",
+        }}
+    >
+        {showPieceWindow && <div id="board-half-cover"></div>}
+        {!showPieceWindow && <div id="board-full-cover"></div>}
+
+        <Chessboard
+            // ref={chessBoardRef}
+            renderScale={0.5}
+            chessPieceLayout={globalPieceLayout.grid}
+            template={{ tempPieceLayout, setTempPieceLayout }}
+        />
+    </div>
+    <div id="chess-layout-button-container">
+        <button
+            onClick={() => {
+                handlePieceWindow(true);
+            }}
+        >
+            Load Default
+        </button>
+        <button
+            onClick={() => {
+                handlePieceWindow(false);
+            }}
+            disabled={showPieceWindow}
+        >
+            Customize!
+        </button>
+    </div>
+
+    {showPieceWindow && (
+        <>
+            <div style={{ fontSize: "1em" }}>
+                <PieceSelector />
+            </div>
+            <button
+                onClick={() => {
+                    confirmPieceLayout();
+                }}
+            >
+                Confirm
+            </button>
+        </>
+    )}
+</div> -->
