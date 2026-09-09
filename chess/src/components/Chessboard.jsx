@@ -5,9 +5,12 @@ import ChessPiece, { PIECE_TYPE } from "./ChessPiece";
 
 export const TileContext = createContext(undefined);
 export const DEFAULT_BOARD_DIMENSION = 8;
+export const DEFAULT_TILE_SIZE = 60
 
 // The typical layout for a chessboard
 export const DEFAULT_PIECE_LAYOUT = [
+    [],
+    [],
     [
         PIECE_TYPE.ROOK,
         PIECE_TYPE.KNIGHT,
@@ -19,8 +22,6 @@ export const DEFAULT_PIECE_LAYOUT = [
         PIECE_TYPE.ROOK,
     ],
     [...Array(DEFAULT_BOARD_DIMENSION).fill(PIECE_TYPE.PAWN)],
-    [],
-    [],
 ];
 
 // looks intense, but all it is doing is constructing an array based on the
@@ -41,7 +42,7 @@ export const getEmptyPieceGrid = (height, width) => {
                 });
         });
 
-    console.log("Empty grid created!", emptyGrid);
+    // console.log("Empty grid created!", emptyGrid);
 
     return emptyGrid;
 };
@@ -49,60 +50,50 @@ export const getEmptyPieceGrid = (height, width) => {
 function Chessboard({
     boardWidth,
     boardHeight,
-    renderScale,
+    // renderScale,
     chessPieceLayout,
     template = { tempPieceLayout: getEmptyPieceGrid(DEFAULT_BOARD_DIMENSION), setTempPieceLayout: null },
 }) {
     
-    const { tempPieceLayout, setTempPieceLayout } = template;
+    // const { tempPieceLayout, setTempPieceLayout } = template;
 
-    // useEffect(() => {
-    //     console.log("Temp piece layout changed!", tempPieceLayout);
-    // }, [tempPieceLayout]);
-
-    const DEFAULT_TILE_SIZE = 60;
     const [dimension, setDimension] = useState({
         width: undefined,
-        height: undefined,
-        valueSet: false,
+        height: undefined
     });
+    
     const [gameGrid, setGameGrid] = useState({ grid: [] });
+    
     const [pieceLayout, setPieceLayout] = useState({
-        pieceGrid: [],
-        // getEmptyPieceGrid(boardHeight === undefined ? DEFAULT_BOARD_DIMENSION : boardHeight),
+        grid: [],
     });
-    const [gameGridCreated, setGameGridCreated] = useState(false);
-    const [tileRenderSize, setTileRenderSize] = useState(DEFAULT_TILE_SIZE);
+
+    // const [gameGridCreated, setGameGridCreated] = useState(false);
+    // const [tileRenderSize, setTileRenderSize] = useState(DEFAULT_TILE_SIZE);
 
     // SHOULD MAKE THIS A GLOBAL STATE (MOVE LATER)
     const [errorMessage, setErrorMessage] = useState(undefined);
     const [errorFlag, setErrorFlag] = useState(false);
 
-    // Initialize the dimensions/size for the game board
     useEffect(() => {
         // Use default value instead if failed to pass params
         const useDefaultDimension = boardWidth === undefined || boardHeight === undefined;
         const useDefaultPieceLayout = chessPieceLayout === undefined;
+        
         setPieceLayout((prev) => ({
-            pieceGrid: useDefaultPieceLayout ? DEFAULT_PIECE_LAYOUT : chessPieceLayout,
+            grid: useDefaultPieceLayout ? DEFAULT_PIECE_LAYOUT : chessPieceLayout,
         }));
 
-        // The naming is a little redundant but will do for now
         setDimension((prev) => ({
             width: useDefaultDimension ? DEFAULT_BOARD_DIMENSION : boardWidth,
-            height: useDefaultDimension ? DEFAULT_BOARD_DIMENSION : boardHeight,
-            valueSet: true,
+            height: useDefaultDimension ? DEFAULT_BOARD_DIMENSION : boardHeight
         }));
-
-        // Apply rendering scale if exists
-        renderScale === undefined
-            ? console.log("No render scale provided! Using default!")
-            : setTileRenderSize(DEFAULT_TILE_SIZE * renderScale);
-    }, [chessPieceLayout]);
+    
+    }, []);
 
     // Build the game grid after the dimensions are set
     useEffect(() => {
-        if (!dimension.valueSet) {
+        if (!dimension.width || !dimension.height) {
             return;
         }
 
@@ -112,8 +103,8 @@ function Chessboard({
             setErrorFlag(true);
         }
 
-        const newGameGrid = buildGameGrid;
-        const pieceGrid = pieceLayout.pieceGrid;
+        const newGameGrid = buildGameGrid(dimension.width, dimension.height);
+        const pieceGrid = pieceLayout.grid;
 
         // Does the game grid match with the piece layout dimension?
         if (newGameGrid.length / 2 !== pieceGrid.length) {
@@ -126,30 +117,32 @@ function Chessboard({
         }
 
         setGameGrid({ grid: newGameGrid });
-        setGameGridCreated(true);
+
+        // setGameGridCreated(true);
     }, [dimension]);
 
-    const buildGameGrid = useMemo(() => {
+    const buildGameGrid = (width, height) => {
+        
         const grid = [];
-        const colList = Array(dimension.width);
-        const rowList = Array(dimension.height);
+        const colList = Array(width);
+        const rowList = Array(height);
 
         // Iterate over the dimensions to make a base grid
         for (let row = 0; row < rowList.length; row++) {
-            // console.log('new row!')
-            grid[row] = [];
+            grid.push([]);
             for (let col = 0; col < colList.length; col++) {
-                // console.log('new col!')
                 const tileLocation = { x: col, y: row };
-                grid[row][col] = [tileLocation];
+                grid[row][col] = tileLocation; 
             }
         }
+
         return grid;
-    }, [dimension.width, dimension.height]);
+    }
 
     const drawBoard = (grid, { width, height }) => {
+        console.log('passed in grid:', grid);
         const currentGrid = [...grid];
-        const chessPieceGrid = [...pieceLayout.pieceGrid];
+        const chessPieceGrid = [...pieceLayout.grid];
         let isGridReversed = false; // Used as a flag to prevent any further mutation
 
         const isOtherTeam = (currentRow) => {
@@ -167,15 +160,16 @@ function Chessboard({
         }
 
         const component = (
-            <TileContext value={{ tileSize: tileRenderSize }}>
+            // <TileContext value={{ tileSize: tileRenderSize }}>
+            <>
                 {gameGrid.grid.map((gridRow, rowIndex) => {
+                    
                     // Checks if time to generate other teams pieces, reverses and ensures only happens once
                     isOtherTeam(rowIndex) && !isGridReversed
                         ? (chessPieceGrid.reverse(), (isGridReversed = true))
                         : null;
 
                     const currentRow = chessPieceGrid[rowIndex % 4];
-
                     const ignorePieceRow = currentRow.length !== dimension.height;
 
                     return (
@@ -189,7 +183,7 @@ function Chessboard({
                         >
                             {gridRow.map((tile, colIndex) => {
                                 // ALTER HERE TO CHANGE INITIAL CONSTRUCTOR DATA
-                                const data = { location: tile[0] };
+                                const data = { location: tile };
 
                                 if (ignorePieceRow) {
                                     data.piece = null;
@@ -204,7 +198,7 @@ function Chessboard({
                                     <ChessTile
                                         key={`${rowIndex}${colIndex}`}
                                         constructorData={data}
-                                        templateGrid={{ tempPieceLayout, setTempPieceLayout }}
+                                        // templateGrid={{ tempPieceLayout, setTempPieceLayout }}
                                     />
                                 );
                                 currentGrid[rowIndex][colIndex].tileData = data;
@@ -214,7 +208,8 @@ function Chessboard({
                         </div>
                     );
                 })}
-            </TileContext>
+            </>
+            // </TileContext>
         );
 
         const updatedGrid = currentGrid;
@@ -222,26 +217,29 @@ function Chessboard({
         return { component: component, value: updatedGrid };
     };
 
-    const getMemoizedBoard = useMemo(() => {
-        if (!gameGridCreated) {
-            return null;
+    const getInitialBoard = () => {
+        if (gameGrid.grid.length == 0 || !dimension.width || !dimension.height) {
+            return { component: null, value: null };
         }
+        // console.log(gameGrid.grid)
         return drawBoard(gameGrid.grid, dimension);
-    }, [pieceLayout.pieceGrid, gameGridCreated, dimension]);
+    }
 
     // Update the gameGrid when the memoized function getMemoizedBoard has created a new value
-    useEffect(() => {
-        if (gameGridCreated) {
-            const updatedGrid = drawBoard(gameGrid.grid, dimension).value;
-            setGameGrid((prev) => ({ ...prev, grid: updatedGrid }));
-        }
-    }, [getMemoizedBoard]);
+    // useEffect(() => {
+    //     if (gameGrid.grid) {
+    //         const updatedGrid = drawBoard(gameGrid.grid, dimension).value;
+    //         setGameGrid((prev) => ({ ...prev, grid: updatedGrid }));
+    //     }
+    // }, [getMemoizedBoard]);
 
     // Styles rules here
     const styles = {
         chessBoard: {
-            width: `${tileRenderSize * dimension.width}px`,
-            height: `${tileRenderSize * dimension.height}px`,
+            // width: `${tileRenderSize * dimension.width}px`,
+            // height: `${tileRenderSize * dimension.height}px`,
+            width: `${DEFAULT_TILE_SIZE * dimension.width}px`,
+            height: `${DEFAULT_TILE_SIZE * dimension.height}px`,
             display: "grid",
             gridTemplateRows: `repeat(${dimension.height}, 1fr)`,
             padding: "1em",
@@ -265,14 +263,15 @@ function Chessboard({
         );
     }
 
-    if (gameGridCreated) {
-        console.log("Reloading board!", getMemoizedBoard.component);
+    if (gameGrid.grid) {
+        // console.log("Reloading board!", getMemoizedBoard.component);
+        console.log("Reloading Board!");
     }
 
     return (
         <>
             {/* Draw the board */}
-            <div style={{ ...styles.chessBoard }}>{getMemoizedBoard?.component || <p>Loading the board</p>}</div>
+            <div style={{ ...styles.chessBoard }}>{getInitialBoard().component || <p>Loading the board</p>}</div>
         </>
     );
 }
