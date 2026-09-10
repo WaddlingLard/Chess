@@ -11,6 +11,7 @@ export const DEFAULT_TILE_SIZE = 60
 export const DEFAULT_PIECE_LAYOUT = [
     [],
     [],
+    [...Array(DEFAULT_BOARD_DIMENSION).fill(PIECE_TYPE.PAWN)],
     [
         PIECE_TYPE.ROOK,
         PIECE_TYPE.KNIGHT,
@@ -21,7 +22,6 @@ export const DEFAULT_PIECE_LAYOUT = [
         PIECE_TYPE.KNIGHT,
         PIECE_TYPE.ROOK,
     ],
-    [...Array(DEFAULT_BOARD_DIMENSION).fill(PIECE_TYPE.PAWN)],
 ];
 
 // looks intense, but all it is doing is constructing an array based on the
@@ -142,8 +142,10 @@ function Chessboard({
     const drawBoard = (grid, { width, height }) => {
         console.log('passed in grid:', grid);
         const currentGrid = [...grid];
+
+        // The piece layout grid represents the bottom-half of the board, will need to be mirrored for the top-half
         const chessPieceGrid = [...pieceLayout.grid];
-        let isGridReversed = false; // Used as a flag to prevent any further mutation
+        // let isGridReversed = false; // Used as a flag to prevent any further mutation
 
         const isOtherTeam = (currentRow) => {
             return currentRow >= height / 2;
@@ -165,12 +167,22 @@ function Chessboard({
                 {gameGrid.grid.map((gridRow, rowIndex) => {
                     
                     // Checks if time to generate other teams pieces, reverses and ensures only happens once
-                    isOtherTeam(rowIndex) && !isGridReversed
-                        ? (chessPieceGrid.reverse(), (isGridReversed = true))
-                        : null;
+                    // isOtherTeam(rowIndex) && !isGridReversed
+                    //     ? (chessPieceGrid.reverse(), (isGridReversed = true))
+                    //     : null;
 
-                    const currentRow = chessPieceGrid[rowIndex % 4];
-                    const ignorePieceRow = currentRow.length !== dimension.height;
+
+                    // [['p'],['p'],[],[],[],[],['p'],['p']]
+                //    ^^
+                    // [[],[],['pieces'],['pieces']]
+                //                          ^^ 
+
+                    const currentPieceRow = chessPieceGrid[isOtherTeam(rowIndex) 
+                        ? rowIndex % chessPieceGrid.length 
+                        : chessPieceGrid.length - 1 - (rowIndex % chessPieceGrid.length)];
+                    const ignorePieceRow = currentPieceRow.length !== height;
+
+                    // console.log(currentPieceRow, rowIndex, chessPieceGrid.length - 1 - (rowIndex % chessPieceGrid.length))
 
                     return (
                         <div
@@ -189,7 +201,7 @@ function Chessboard({
                                     data.piece = null;
                                 } else {
                                     // Check if there is a piece in the location
-                                    data.piece = currentRow[colIndex].length === 0 ? null : currentRow[colIndex];
+                                    data.piece = currentPieceRow[colIndex].length === 0 ? null : currentPieceRow[colIndex];
                                     // data.piece = chessPiece == null ? null : chessPiece[0];
                                 }
 
