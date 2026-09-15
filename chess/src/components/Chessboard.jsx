@@ -181,7 +181,8 @@ function Chessboard({
                         ? rowIndex % chessPieceGrid.length 
                         : chessPieceGrid.length - 1 - (rowIndex % chessPieceGrid.length)];
                     const ignorePieceRow = currentPieceRow.length !== height;
-
+                    console.log(rowIndex)
+                    // console.log(isOtherTeam(rowIndex))
                     // console.log(currentPieceRow, rowIndex, chessPieceGrid.length - 1 - (rowIndex % chessPieceGrid.length))
 
                     return (
@@ -195,14 +196,21 @@ function Chessboard({
                         >
                             {gridRow.map((tile, colIndex) => {
                                 // ALTER HERE TO CHANGE INITIAL CONSTRUCTOR DATA
-                                const data = { location: tile };
+                                const data = {};
+                                const {x, y} = tile;
+                                data.location = { x, y };
 
                                 if (ignorePieceRow) {
                                     data.piece = null;
                                 } else {
                                     // Check if there is a piece in the location
-                                    data.piece = currentPieceRow[colIndex].length === 0 ? null : currentPieceRow[colIndex];
-                                    // data.piece = chessPiece == null ? null : chessPiece[0];
+                                    // NOTE: This is grabbing a reference at the index, not a copy
+                                    // This is what is causing the values to be 'saved'
+                                    // data.piece = currentPieceRow[colIndex];
+                                    data.piece = {...currentPieceRow[colIndex]};
+                                    
+                                    data.piece.team = isOtherTeam(rowIndex) ? "BLACK" : "WHITE"
+                                    console.log(data)
                                 }
 
                                 // console.log("New tile data!", data);
@@ -225,6 +233,7 @@ function Chessboard({
         );
 
         const updatedGrid = currentGrid;
+        // console.log(updatedGrid)
 
         return { component: component, value: updatedGrid };
     };

@@ -7,6 +7,7 @@ const TILE_STATE = Object.freeze({
     EMPTY: "EMPTY",
     HOLDING_PIECE: "HOLDING_PIECE",
     IN_CHECK: "IN_CHECK",
+    TAKEN: "TAKEN"
 });
 
 function ChessTile({
@@ -15,10 +16,10 @@ function ChessTile({
 }) {
     
     // const { tempPieceLayout, setTempPieceLayout } = templateGrid;
-
+    
+    // Add more variables for constructorData if needed
     const gridPoint = constructorData.location;
     const chessPiece = constructorData.piece;
-    // Add more variables for constructorData if needed
 
     // const parentContext = useContext(TileContext);
 
@@ -37,20 +38,10 @@ function ChessTile({
     const dropDiv = useRef(null);
     // const [validDropOccurred, setValidDropOccurred] = useState(false);
 
-    // console.log("loading new tile!", gridPoint, chessPiece, currentState, isHoveringTile, tileColor, position);
-
-    // Set the position of the chess tile (initial use effect)
+    // For mounting only handle the location data, piece prop changes so handle in a separate useEffect
     useEffect(() => {
         if (gridPoint.x === undefined || gridPoint.y === undefined) {
             throw new Error("Coordinates not provided to the chess tile constructor!");
-        }
-
-        // Validate chess piece (if there is one), plant on the tile if valid
-        // NOTE: Account for situation where sends in an empty []
-        if (chessPiece !== null) {
-            console.log("Initializing Piece!");
-            setCurrentState(TILE_STATE.HOLDING_PIECE);
-            setChessPieceHolding(PIECE_TYPE[chessPiece.name]);
         }
 
         // Again, redundant naming
@@ -64,23 +55,29 @@ function ChessTile({
 
     // Resetting tile state if new chessPiece
     useEffect(() => {
-        console.log("Setting new chesspiece!", chessPiece);
         let piece = chessPiece;
+        let isEmpty = currentState === TILE_STATE.EMPTY;
 
         if (chessPiece === null) {
             setCurrentState(TILE_STATE.EMPTY);
             setChessPieceHolding(null);
             return;
-        } 
-        
-        console.log("Piece is not null!", PIECE_TYPE[chessPiece.name]);
-        
-        if (Array.isArray(piece)) {
-            piece = piece[0];
         }
 
-        setCurrentState(TILE_STATE.HOLDING_PIECE);
-        setChessPieceHolding(PIECE_TYPE[piece.name]);
+        if (isEmpty) {
+            // New piece on the tile
+            setCurrentState(TILE_STATE.HOLDING_PIECE);
+            setChessPieceHolding({...PIECE_TYPE[chessPiece.name],  ...{ team: chessPiece.team }});
+            return;
+        }
+
+        // Check if the piece was captured, will likely need to account for capture logic
+        let pieceIsCaptured = chessPieceHolding.team !== piece.team;
+
+        if (pieceIsCaptured) {
+            setChessPieceHolding({...PIECE_TYPE[piece.name], ...{ team: piece.team }});
+            return;
+        }        
 
     }, [chessPiece]);
 
@@ -88,36 +85,52 @@ function ChessTile({
     //     setValidDropOccurred(!validDropOccurred);
     // };
 
-    const generatePiece = useMemo(() => {
-        if (currentState === TILE_STATE.EMPTY) {
-            // console.log("Returning null!");
+    const generatePiece = (name, team) => {
+        if (!name || !team) {
             return null;
         }
 
-        // console.log(currentState);
-        try {
-            return (
-                <>
-                    <ChessPiece
-                        name={chessPieceHolding.name}
-                        // drop={{ validDropOccurred, toggleDrop }}
-                    />
-                </>
-            );
-        } catch (TypeError) {
-            console.error(TypeError);
-            console.log("Values at time of error:");
-            console.log("CurrentState: ", currentState);
-            console.log("Position: ", position);
-            console.log("ConstructorData: ", constructorData);
-            console.log("Chess Piece Holding", chessPieceHolding === null);
-            console.trace();
-        }
-    }, [
-        currentState,
-        chessPieceHolding,
-        // validDropOccurred
-    ]);
+        return (
+            <>
+                <ChessPiece
+                    name={name}
+                    teamType={team}
+                />
+            </>
+        )
+    }
+
+    // const generatePiece = useMemo(() => {
+    //     if (currentState === TILE_STATE.EMPTY || chessPieceHolding === undefined) {
+    //         // console.log("Returning null!");
+    //         return null;
+    //     }
+
+    //     // console.log(currentState);
+    //     try {
+    //         return (
+    //             <>
+    //                 <ChessPiece
+    //                     name={chessPieceHolding.name}
+    //                     teamType={chessPieceHolding.team}
+    //                     // drop={{ validDropOccurred, toggleDrop }}
+    //                 />
+    //             </>
+    //         );
+    //     } catch (TypeError) {
+    //         console.error(TypeError);
+    //         console.log("Values at time of error:");
+    //         console.log("CurrentState: ", currentState);
+    //         console.log("Position: ", position);
+    //         console.log("ConstructorData: ", constructorData);
+    //         console.log("Chess Piece Holding", chessPieceHolding === null);
+    //         console.trace();
+    //     }
+    // }, [
+    //     currentState,
+    //     chessPieceHolding,
+    //     // validDropOccurred
+    // ]);
 
     // const pieceDroppedHandler = (event) => {
     //     event.preventDefault();
@@ -212,6 +225,10 @@ function ChessTile({
                 onMouseEnter={() => setIsHoveringTile(true)}
                 onMouseLeave={() => setIsHoveringTile(false)}
                 
+                onClick={(event) => {
+                    console.log(`Clicked on row: ${position.row}, col: ${position.col}`)
+                }}
+
                 // onDragEnter={(e) => {
                 //     e.preventDefault();
                 //     setIsHoveringTile(true);
@@ -239,7 +256,12 @@ function ChessTile({
                     justifyContent: "center",
                 }}
             >
-                <div ref={dropDiv}>{generatePiece}</div>
+                <div ref={dropDiv}>{currentState === TILE_STATE.EMPTY ? null : 
+                    <ChessPiece
+                    name={chessPieceHolding.name}
+                    teamType={chessPieceHolding.team}
+                    />
+                }</div>
             </div>
         </>
     );

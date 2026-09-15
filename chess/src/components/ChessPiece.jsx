@@ -23,6 +23,8 @@ export const PIECE_TYPE = Object.freeze({
     KING:   { name: "KING",   icon: faChessKing },
 });
 
+const VALID_TEAM_TYPES = ["WHITE", "BLACK"];
+
 function ChessPiece({
     name,
     teamType,
@@ -47,14 +49,22 @@ function ChessPiece({
     // console.log("Name: ", name);
     // console.log("Team type: ", teamType);
 
-    // Set the piece type
+    // Set the piece type and team affiliation
     useEffect(() => {
         if (PIECE_TYPE[name] === undefined) {
             throw new Error("Invalid piece type provided to chess piece constructor!");
         }
+        
+        setPieceType(PIECE_TYPE[name]);
+
+        if (!VALID_TEAM_TYPES.includes(teamType)) {
+            // setTeamAffiliation("WHITE");
+            // return;
+            throw new Error(`Unknown team type provided: ${teamType}`);
+        }
 
         // console.log("Setting new piece", PIECE_TYPE[name]);
-        setPieceType(PIECE_TYPE[name]);
+        setTeamAffiliation(teamType);
     }, []);
 
     const chessPieceDataHandler = (event) => {
@@ -116,7 +126,9 @@ function ChessPiece({
                             height: "80%",
                             alignSelf: "center",
                         }}
-                        color="#888"
+                        color={teamAffiliation === "WHITE" ? "#AAA" : "#444"}
+                        // swapOpacity={true}
+                        // border={true}
                         icon={pieceType.icon}
                     />
                 )}
