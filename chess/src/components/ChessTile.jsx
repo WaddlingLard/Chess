@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useMemo, useRef } from "react";
-import { DEFAULT_TILE_SIZE, TileContext } from "./Chessboard";
+import { DEFAULT_TILE_SIZE } from "./Chessboard";
 import ChessPiece from "./ChessPiece";
 import { PIECE_TYPE } from "./ChessPiece";
 
@@ -29,10 +29,15 @@ function ChessTile({
         valueSet: false,
     });
     
+    // These two states go hand-in-hand
     const [currentState, setCurrentState] = useState(TILE_STATE.EMPTY);
-    const [isHoveringTile, setIsHoveringTile] = useState(false);
-    const [tileColor, setTileColor] = useState(undefined);
     const [chessPieceHolding, setChessPieceHolding] = useState(null);
+    
+    // States that trigger additional functionality/UI
+    const [isHoveringTile, setIsHoveringTile] = useState(false);
+    const [isSelected, setIsSelected] = useState(false);
+    
+    const [tileColor, setTileColor] = useState(undefined);
 
     // Reference to itself
     const dropDiv = useRef(null);
@@ -81,24 +86,35 @@ function ChessTile({
 
     }, [chessPiece]);
 
+    const handleTileHover = (isMouseOn) => {
+        if (currentState === TILE_STATE.EMPTY) {
+            return;
+        }
+        setIsHoveringTile(isMouseOn);
+    }
+
+    const handleSelection = () => {
+
+    }
+
     // const toggleDrop = () => {
     //     setValidDropOccurred(!validDropOccurred);
     // };
 
-    const generatePiece = (name, team) => {
-        if (!name || !team) {
-            return null;
-        }
+    // const generatePiece = (name, team) => {
+    //     if (!name || !team) {
+    //         return null;
+    //     }
 
-        return (
-            <>
-                <ChessPiece
-                    name={name}
-                    teamType={team}
-                />
-            </>
-        )
-    }
+    //     return (
+    //         <>
+    //             <ChessPiece
+    //                 name={name}
+    //                 teamType={team}
+    //             />
+    //         </>
+    //     )
+    // }
 
     // const generatePiece = useMemo(() => {
     //     if (currentState === TILE_STATE.EMPTY || chessPieceHolding === undefined) {
@@ -222,10 +238,15 @@ function ChessTile({
     return (
         <>
             <div
-                onMouseEnter={() => setIsHoveringTile(true)}
-                onMouseLeave={() => setIsHoveringTile(false)}
+                onMouseEnter={() => {
+                    handleTileHover(true);
+                }}
+                onMouseLeave={() => {
+                    handleTileHover(false)
+                }}
                 
                 onClick={(event) => {
+                    handleSelection();
                     console.log(`Clicked on row: ${position.row}, col: ${position.col}`)
                 }}
 
@@ -241,7 +262,6 @@ function ChessTile({
                 //     e.preventDefault();
                 // }}
                 // onDrop={pieceDroppedHandler}
-                
                 style={{
                     // width: parentContext.tileSize,
                     // height: parentContext.tileSize,
@@ -254,6 +274,8 @@ function ChessTile({
                     transitionDelay: "0ms",
                     display: "flex",
                     justifyContent: "center",
+                    pointerEvents: currentState === TILE_STATE.EMPTY ? "none" : "all",
+                    cursor: currentState === TILE_STATE.EMPTY ? "auto" : "pointer"
                 }}
             >
                 <div ref={dropDiv}>{currentState === TILE_STATE.EMPTY ? null : 
