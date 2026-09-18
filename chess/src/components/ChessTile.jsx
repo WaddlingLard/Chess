@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext, useMemo, useRef } from "react";
 import { DEFAULT_TILE_SIZE } from "./Chessboard";
 import ChessPiece from "./ChessPiece";
 import { PIECE_TYPE } from "./ChessPiece";
+import { useGame } from "../contexts/GameContext";
 
 const TILE_STATE = Object.freeze({
     EMPTY: "EMPTY",
@@ -11,14 +12,18 @@ const TILE_STATE = Object.freeze({
 });
 
 function ChessTile({
-    constructorData = { location: { x: 0, y: 0 }, piece: null },
+    constructorData = { x: 0, y: 0, piece: null, tile: null },
+    updateBoard,
     // templateGrid = { tempPieceLayout: { grid: [] }, setTempPieceLayout: null },
 }) {
     
     // const { tempPieceLayout, setTempPieceLayout } = templateGrid;
+
+    // const { boardState, setBoardState } = useGame();
+    const { chessBoard, setChessBoard } = updateBoard;
     
     // Add more variables for constructorData if needed
-    const gridPoint = constructorData.location;
+    const {x, y} = constructorData;
     const chessPiece = constructorData.piece;
 
     // const parentContext = useContext(TileContext);
@@ -26,7 +31,7 @@ function ChessTile({
     const [position, setPosition] = useState({
         row: undefined,
         col: undefined,
-        valueSet: false,
+        // valueSet: false,
     });
     
     // These two states go hand-in-hand
@@ -45,17 +50,17 @@ function ChessTile({
 
     // For mounting only handle the location data, piece prop changes so handle in a separate useEffect
     useEffect(() => {
-        if (gridPoint.x === undefined || gridPoint.y === undefined) {
+        if (x === undefined || y === undefined) {
             throw new Error("Coordinates not provided to the chess tile constructor!");
         }
 
         // Again, redundant naming
         setPosition((prev) => ({
-            row: gridPoint.y,
-            col: gridPoint.x,
-            valueSet: true,
+            row: y,
+            col: x,
+            // valueSet: true,
         }));
-        setTileColor((gridPoint.x + gridPoint.y) % 2 == 0 ? "#FFF" : "#000");
+        setTileColor((x + y) % 2 == 0 ? "#FFF" : "#000");
     }, []);
 
     // Resetting tile state if new chessPiece
@@ -94,7 +99,22 @@ function ChessTile({
     }
 
     const handleSelection = () => {
+        setChessBoard({ 
+            board: 
+            chessBoard.board.map((row, rIdx) => 
+                row.map((tileData, cIdx) => {
+                    if (rIdx === position.row && cIdx == position.col) {
+                        return { ...tileData, ...{ tile: { selected: true }} }; 
+                    }
+                    return tileData;
+                })
+            )
+        })
+    }
+    
 
+    if (position.row === undefined || position.col === undefined) {
+        return null;
     }
 
     // const toggleDrop = () => {
