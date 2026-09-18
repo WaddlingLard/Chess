@@ -68,6 +68,10 @@ function Chessboard({
     const [pieceLayout, setPieceLayout] = useState({ grid: [] });
     const [gameStarted, setGameStarted] = useState(false);
 
+    // Store the selected tiles after each board generation
+    /**@type <React.RefObject<Record["x" | "y", number | null]> */
+    const selectedTile = useRef({ x: null, y: null });
+
     // const [gameGridCreated, setGameGridCreated] = useState(false);
     // const [tileRenderSize, setTileRenderSize] = useState(DEFAULT_TILE_SIZE);
 
@@ -127,11 +131,11 @@ function Chessboard({
         setBoardSignature(JSON.stringify(chessBoard.board));
     }, [chessBoard]);
 
-    useEffect(() => {
-        if (gameStarted) {
-            setGameStatus(GAME_STATUS.IN_PROGRESS);
-        }
-    }, [gameStarted]);
+    // useEffect(() => {
+    //     if (gameStarted) {
+    //         setGameStatus(GAME_STATUS.IN_PROGRESS);
+    //     }
+    // }, [gameStarted]);
 
     /**
      * Builds a grid and adds the piece/tile information
@@ -180,28 +184,40 @@ function Chessboard({
      */
 
     /**
-     * Draw in the board with the new/initial data
+     * Get the component the properly reflects the board state
      * @param {Array<Array<Object>>} gameGrid 
      * @returns {BoardReturn}
      */
-    const drawBoard = (gameGrid, pieceGrid) => {
+    const drawBoard = (gameGrid) => {
         
+        // console.log('drawing boad!')
         const { board } = gameGrid;
         const currentBoard = [...board];
+        const newSelected = { x: null, y: null };
+        const existingSelection = selectedTile.current.x !== null && selectedTile.current.y !== null;
 
-        // The piece layout grid represents the bottom-half of the board, will need to be mirrored for the top-half
-        const { grid } = pieceGrid;
-        const chessPieceGrid = [...grid];
-       
-        const isOtherTeam = (currentRow) => {
-            return currentRow >= currentBoard.length / 2;
-        };
+        const matchSelection = ({x, y}) => {
+            return x === selectedTile.current.x && y === selectedTile.current.y;
+        }
 
-        const gameInProgress = gameStatus === GAME_STATUS.IN_PROGRESS;
-        console.log(gameInProgress, currentBoard);
-        
+        const selectedTiles = currentBoard.map((row, rIdx) => row.filter((tileData, index) => tileData.tile.selected)).flat();
+        console.log(selectedTiles);
+        for (const tile of selectedTiles) {
+            const alreadySelected = matchSelection(tile);
+            if (!alreadySelected) {
+                newSelected.x = tile.x;
+                newSelected.y = tile.y;
+                existingSelection ? (currentBoard[selectedTile.current.y][selectedTile.current.x].tile.selected = false) : null;
+            }
+        }
 
-        const component = gameInProgress ? (
+        if (newSelected.x !== null && newSelected.y !== null) {
+            // Clear previous selected tile
+            // const [x, y] = /** @type {[number, number]} */ (selectedTiles.current);
+            selectedTile.current = newSelected;
+        }
+
+        const component = (
             <>
                 {currentBoard.map((gridRow, rIdx) => {
                     return (
@@ -213,11 +229,11 @@ function Chessboard({
                                 height: "fit-content",
                             }}
                         >
-                        {gridRow.map((tile, cIdx) => {
+                        {gridRow.map((tileData, cIdx) => {
                             return (
                                 <ChessTile
                                     key={`${rIdx}${cIdx}`}
-                                    constructorData={currentBoard[rIdx][cIdx]}
+                                    constructorData={tileData}
                                     updateBoard={{chessBoard, setChessBoard}}
                                     // templateGrid={{ tempPieceLayout, setTempPieceLayout }}
                                 />
@@ -231,7 +247,7 @@ function Chessboard({
         
         // Necessary for tile updates
         const updatedGrid = currentBoard;
-        // console.log("Updated Grid: ", updatedGrid);
+        console.log(updatedGrid);
 
         return { component: component, value: updatedGrid };
     };
@@ -256,18 +272,20 @@ function Chessboard({
      * @returns {BoardReturn['component']}
      */
     const getBoard = useMemo(() => {
-        if (!validateBoard(chessBoard.board, dimension.width, dimension.height) || !pieceLayout.grid) {
+        console.log("board signature changed!");
+        if (!validateBoard(chessBoard.board, dimension.width, dimension.height)) {
             /** @type {BoardReturn['component']} */
             const nulledBoard = null;
             return nulledBoard;
         }
 
-        const { component, value } = drawBoard(chessBoard, pieceLayout);
+        console.log(selectedTile);
+        const { component, value } = drawBoard(chessBoard);
         setChessBoard({ board: value });
 
-        if (!gameStarted) {
-            setGameStarted(true);
-        }
+        // if (!gameStarted) {
+        //     setGameStarted(true);
+        // }
 
         return component;
     }, [boardSignature]);

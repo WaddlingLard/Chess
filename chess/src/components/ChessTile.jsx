@@ -23,8 +23,8 @@ function ChessTile({
     const { chessBoard, setChessBoard } = updateBoard;
     
     // Add more variables for constructorData if needed
-    const {x, y} = constructorData;
-    const chessPiece = constructorData.piece;
+    const { x, y, piece, tile } = constructorData; 
+    const { selected } = tile;
 
     // const parentContext = useContext(TileContext);
 
@@ -65,10 +65,9 @@ function ChessTile({
 
     // Resetting tile state if new chessPiece
     useEffect(() => {
-        let piece = chessPiece;
         let isEmpty = currentState === TILE_STATE.EMPTY;
 
-        if (chessPiece === null) {
+        if (piece === null) {
             setCurrentState(TILE_STATE.EMPTY);
             setChessPieceHolding(null);
             return;
@@ -77,7 +76,7 @@ function ChessTile({
         if (isEmpty) {
             // New piece on the tile
             setCurrentState(TILE_STATE.HOLDING_PIECE);
-            setChessPieceHolding({...PIECE_TYPE[chessPiece.name],  ...{ team: chessPiece.team }});
+            setChessPieceHolding({...PIECE_TYPE[piece.name],  ...{ team: piece.team }});
             return;
         }
 
@@ -89,7 +88,13 @@ function ChessTile({
             return;
         }        
 
-    }, [chessPiece]);
+    }, [piece]);
+
+    useEffect(() => {
+        if (!tile) return;
+        const selectionStatus = tile.selected;
+        setIsSelected(selectionStatus);
+    }, [selected])
 
     const handleTileHover = (isMouseOn) => {
         if (currentState === TILE_STATE.EMPTY) {
@@ -282,12 +287,13 @@ function ChessTile({
                 //     e.preventDefault();
                 // }}
                 // onDrop={pieceDroppedHandler}
+
                 style={{
                     // width: parentContext.tileSize,
                     // height: parentContext.tileSize,
                     width: `${DEFAULT_TILE_SIZE}px`,
                     height: `${DEFAULT_TILE_SIZE}px`,
-                    backgroundColor: isHoveringTile ? "#B4D5FF" : tileColor,
+                    backgroundColor: (isSelected || isHoveringTile) ? "#B4D5FF" : tileColor,
                     transitionDuration: "300ms",
                     transitionProperty: "background-color",
                     transitionTimingFunction: "ease-out",
