@@ -104,15 +104,15 @@ function Chessboard({
             setErrorFlag(true);
         }
 
-        const newGameGrid = buildGameGrid(dimension.width, dimension.height);
-        const pieceGrid = pieceLayout.grid;
+        const { grid } = pieceLayout;
+        const newGameGrid = buildGameGrid(grid, dimension.width, dimension.height);
 
         // Does the game grid match with the piece layout dimension?
-        if (newGameGrid.length / 2 !== pieceGrid.length) {
+        if (newGameGrid.length / 2 !== grid.length) {
             setErrorMessage(
                 `Provided piece layout does not match up with the dimensions of the chess board ${
                     newGameGrid.length / 2
-                } !== ${pieceGrid.length}`
+                } !== ${grid.length}`
             );
             setErrorFlag(true);
         }
@@ -134,22 +134,39 @@ function Chessboard({
     }, [gameStarted]);
 
     /**
-     * Builds a grid with the provided measurements
+     * Builds a grid and adds the piece/tile information
      * @param {number} width 
      * @param {number} height 
      * @returns {Array<Array<Record<"x" | "y", number>>}
      */
-    const buildGameGrid = (width, height) => {
-        
+    const buildGameGrid = (chessPieceGrid, width, height) => {
+    
+        const isOtherTeam = (currentRow) => {
+            return currentRow >= height / 2;
+        };
+
         /**@type {Array<Array<Object>>} */
         const grid = [];
 
         // Iterate over the dimensions to make a base grid
-        for (let row = 0; row < width; row++) {
+        for (let rIdx = 0; rIdx < width; rIdx++) {
+
+            const currentPieceRow = chessPieceGrid[isOtherTeam(rIdx) 
+                ? rIdx % chessPieceGrid.length 
+                : chessPieceGrid.length - 1 - (rIdx % chessPieceGrid.length)];
+            const ignorePieceRow = !currentPieceRow.length
+
             grid.push([]);
-            for (let col = 0; col < height; col++) {
-                const tileLocation = { x: col, y: row };
-                grid[row][col] = tileLocation; 
+            for (let cIdx = 0; cIdx < height; cIdx++) {
+                const data = { x: cIdx, y: rIdx };
+                data.tile = { selected: false };
+                if (ignorePieceRow) {
+                    data.piece = null;
+                } else {
+                    data.piece = { ...currentPieceRow[cIdx] };
+                    data.piece.team = isOtherTeam(rIdx) ? "BLACK" : "WHITE"
+                }
+                grid[rIdx][cIdx] = data; 
             }
         }
 
@@ -210,54 +227,9 @@ function Chessboard({
                     )
                 })}
             </>
-        ) : (
-            <>
-                {currentBoard.map((gridRow, rIdx) => {
-                    
-                    const currentPieceRow = chessPieceGrid[isOtherTeam(rIdx) 
-                        ? rIdx % chessPieceGrid.length 
-                        : chessPieceGrid.length - 1 - (rIdx % chessPieceGrid.length)];
-                    const ignorePieceRow = currentPieceRow.length !== currentBoard[0].length;
-
-                    return (
-                        <div
-                            key={rIdx}
-                            style={{
-                                display: "flex",
-                                width: "fit-content",
-                                height: "fit-content",
-                            }}
-                        >
-                            {gridRow.map((tile, cIdx) => {
-                                const data = {};
-                                data.tile = { selected: false };
-
-                                if (ignorePieceRow) {
-                                    data.piece = null;
-                                } else {
-                                    data.piece = { ...currentPieceRow[cIdx] };
-                                    data.piece.team = isOtherTeam(rIdx) ? "BLACK" : "WHITE"
-                                }
-
-                                currentBoard[rIdx][cIdx] = Object.assign(currentBoard[rIdx][cIdx], data);
-
-                                return (
-                                    <ChessTile
-                                        key={`${rIdx}${cIdx}`}
-                                        constructorData={currentBoard[rIdx][cIdx]}
-                                        updateBoard={{chessBoard, setChessBoard}}
-                                        // templateGrid={{ tempPieceLayout, setTempPieceLayout }}
-                                    />
-                                );
-                            })}
-                        </div>
-                    );
-                })}
-            </>
-            // </TileContext>
         );
-
-        console.log(component);
+        
+        // Necessary for tile updates
         const updatedGrid = currentBoard;
         // console.log("Updated Grid: ", updatedGrid);
 
