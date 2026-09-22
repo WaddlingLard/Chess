@@ -109,7 +109,7 @@ function ChessTile({
             chessBoard.board.map((row, rIdx) => 
                 row.map((tileData, cIdx) => {
                     if (rIdx === position.row && cIdx == position.col) {
-                        return { ...tileData, ...{ tile: { selected: true }} }; 
+                        return { ...tileData, ...{ tile: { ...tile, selected: !isSelected }} }; 
                     }
                     return tileData;
                 })
