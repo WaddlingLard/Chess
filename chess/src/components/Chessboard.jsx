@@ -308,8 +308,8 @@ function Chessboard({
         
         // console.log('drawing boad!')
         const { board } = gameGrid;
-        const currentBoard = [...board];
-        const newSelected = { x: null, y: null };
+        let currentBoard = [...board];
+        const newSelected = /**@type {{ x: number | null, y: number | null }} */({ x: null, y: null });
         const existingSelection = selectedTile.current.x !== null && selectedTile.current.y !== null;
 
         const matchSelection = ({x, y}) => {
@@ -317,13 +317,20 @@ function Chessboard({
         }
 
         const selectedTiles = currentBoard.map((row, rIdx) => row.filter((tileData, index) => tileData.tile.selected)).flat();
-        console.log(selectedTiles);
-        for (const tile of selectedTiles) {
-            const alreadySelected = matchSelection(tile);
-            if (!alreadySelected) {
-                newSelected.x = tile.x;
-                newSelected.y = tile.y;
-                existingSelection ? (currentBoard[selectedTile.current.y][selectedTile.current.x].tile.selected = false) : null;
+        if (selectedTiles.length === 0) {
+            // Clear the path and set the selection point to nothing
+            /**@type {Point} */
+            const clearedPoint = { x: null, y: null };
+            selectedTile.current = clearedPoint;
+            currentBoard = clearPath(currentBoard);
+        } else {
+            for (const tile of selectedTiles) {
+                const alreadySelected = matchSelection(tile);
+                if (!alreadySelected) {
+                    newSelected.x = tile.x;
+                    newSelected.y = tile.y;
+                    existingSelection ? (currentBoard[selectedTile.current.y][selectedTile.current.x].tile.selected = false) : null;
+                }
             }
         }
 
