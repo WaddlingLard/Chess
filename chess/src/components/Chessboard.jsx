@@ -1,9 +1,14 @@
 import React, { useState, useEffect, createContext, useRef, useMemo } from "react";
 import "../css/chessboard.css";
 import ChessTile from "./ChessTile";
-import ChessPiece, { PIECE_TYPE } from "./ChessPiece";
+import ChessPiece, { PIECE_MOVE_SYSTEM, PIECE_TYPE } from "./ChessPiece";
 import { GAME_STATUS, useGame } from "../contexts/GameContext";
+import { useSelect } from "../contexts/SelectContext";
 
+// Importing types
+/**@typedef {import('./ChessPiece').PieceInformation} PieceInformation*/
+/**@typedef {import('./ChessTile').TileConditionData} TileConditionData */
+/**@typedef {import('./ChessPiece').MoveSystem} MoveSystem */
 // export const TileContext = createContext(undefined);
 export const DEFAULT_BOARD_DIMENSION = 8;
 export const DEFAULT_TILE_SIZE = 60
@@ -178,6 +183,104 @@ function Chessboard({
     }
 
     /**
+     * Generate the valid tiles that the selected tile/piece can click on to move too
+     * @param {Point} selectedTile 
+     * @param {Record<string, PieceInformation>} pieceLocations 
+     * @param {TileData[][]} gameBoard 
+     * @returns {Point[]}
+     */
+    const generateValidMoves = (selectedTile, pieceLocations, gameBoard) => {
+        // Get the piece that belongs to the selectedTile
+        
+        /**@type {PieceInformation & {moveSystem: MoveSystem | undefined}} */
+        let pieceInfo = {...pieceLocations[JSON.stringify(selectedTile)]};
+        pieceInfo = Object.assign(pieceInfo, { moveSystem: {...PIECE_MOVE_SYSTEM[pieceInfo.name]}});
+        /**@type {Point[]} */
+        const validMovePath = [];
+        // let { steps, limit, conditions } = PIECE_MOVE_SYSTEM[pieceInfo.name];
+        const { conditions } = pieceInfo.moveSystem;
+
+        if (conditions) {
+            for (const key in pieceInfo.moveSystem) {
+                // console.log(key);
+                if (key in conditions) {
+                    const bindContextCallable = pieceInfo.moveSystem.conditions[key].bind(pieceInfo); 
+                    // console.log("calling", key);
+                    pieceInfo.moveSystem[key] = bindContextCallable();
+                }
+            }   
+        }
+
+        // Grab after the conditions are applied
+        const { steps, limit } = pieceInfo.moveSystem;
+
+        console.log(steps, limit, conditions);
+
+        let moveSteps = [...steps];
+        const [currY, currX] = [selectedTile.y, selectedTile.x]; 
+        for (let i = 0; i !== (limit === 0 ? -1 : limit) ; i++) {
+            
+            if (moveSteps.length === 0) {
+                break;
+            }
+
+            for (const step of moveSteps) {
+                /**@type {[number[], number[]]} */
+                const [ySteps, xSteps] = step;
+                const yDiff = ySteps.reduce((subtotal, currVal) => { return subtotal + currVal }) * (i + 1);
+                const xDiff = xSteps.reduce((subtotal, currVal) => { return subtotal + currVal }) * (i + 1);
+                /**@type {Point} */
+                const newValidMove = { x: xDiff + currX, y: yDiff + currY };
+
+                // console.log('new move: ', newValidMove, yDiff, xDiff, ySteps, xSteps);
+
+                if (newValidMove.x >= gameBoard[0].length 
+                    || newValidMove.x < 0
+                    || newValidMove.y >= gameBoard.length
+                    || newValidMove.y < 0
+                ) {
+                    // Out of bounds
+                    moveSteps = moveSteps.filter((step, idx) => { return step[0] != ySteps && step[1] != xSteps });
+                    continue;
+                }
+                
+                // Need to account for capture logic if opposite team
+                if (JSON.stringify(newValidMove) in pieceLocations) {
+                    // Piece existing on tile
+                    // NOTE: This is where capture logic occurs
+
+                    moveSteps = moveSteps.filter((step, idx) => { return step[0] != ySteps && step[1] != xSteps });
+                } else {
+                    // Valid move
+                    // gameBoard[newValidMove.y][newValidMove.x].tile.validPath = true;
+                    validMovePath.push(newValidMove);
+                } 
+            }
+        }
+
+        console.log("Valid Moves: ", validMovePath);
+
+        return validMovePath;
+
+    }
+
+    /**
+     * @param {TileData[][]} gameBoard
+     * @returns {TileData[][]}
+     */
+    const clearPath = (gameBoard) => {
+        const currentBoard = [...gameBoard];
+
+        for (let rowIdx = 0; rowIdx < currentBoard.length; rowIdx++) {
+            for (let colIdx = 0; colIdx < currentBoard[0].length; colIdx++) {
+                currentBoard[rowIdx][colIdx].tile.validPath = false;
+            }
+        }
+
+        return currentBoard;
+    }
+
+    /**
      * @typedef {Object} BoardReturn
      * @property {Element | null} component
      * @property {Array<Array<Object>> | null} value
@@ -215,6 +318,12 @@ function Chessboard({
             // Clear previous selected tile
             // const [x, y] = /** @type {[number, number]} */ (selectedTiles.current);
             selectedTile.current = newSelected;
+            const validMoveTiles = generateValidMoves(selectedTile.current, pieceTable.table, currentBoard);
+            // Clear the current tile path
+            currentBoard = clearPath(currentBoard);
+            validMoveTiles.forEach((currentPoint) => {
+                currentBoard[currentPoint.y][currentPoint.x].tile.validPath = true;
+            });
         }
 
         const component = (
