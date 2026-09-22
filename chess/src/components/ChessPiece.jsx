@@ -12,7 +12,30 @@ import {
     faChessKing,
 } from "@fortawesome/free-solid-svg-icons";
 import PieceSelector from "./PieceSelector";
+import { STEP_FUNCTIONS } from "../types/piece_moves";
 
+/**@typedef {Array<Array<Array<number>>} StepList*/
+
+/**
+ * @typedef {Object} MoveSystem
+ * @property {StepList} steps
+ * @property {number} limit
+ * @property {Record<string, Function>} conditions
+ */
+
+/**
+ * @typedef {{ 
+ * name: string, 
+ * icon: any, 
+ * team: "WHITE" | "BLACK" | undefined 
+ * moveCount: number
+ * }} PieceInformation
+ */
+
+/**
+ * @typedef {"PAWN" | "KNIGHT" | "BISHOP" | "ROOK" | "QUEEN" | "KING" | "BLANK"} ChessPieceType
+ * @type {Record<ChessPieceType, Omit<PieceInformation, 'moveCount' | 'team'>>}
+ */
 // prettier-ignore
 export const PIECE_TYPE = Object.freeze({
     PAWN:   { name: "PAWN",   icon: faChessPawn },
@@ -21,6 +44,22 @@ export const PIECE_TYPE = Object.freeze({
     ROOK:   { name: "ROOK",   icon: faChessRook },
     QUEEN:  { name: "QUEEN",  icon: faChessQueen },
     KING:   { name: "KING",   icon: faChessKing },
+    BLANK:  { name: null,      icon: null }
+});
+
+/**@type {Record<ChessPieceType, MoveSystem} */
+export const PIECE_MOVE_SYSTEM = Object.freeze({
+    PAWN:   { steps: [...STEP_FUNCTIONS.FORWARD],                                  limit: 1, 
+        conditions: { 
+        steps() { return PIECE_MOVE_SYSTEM.PAWN.steps.map(([ySteps, xSteps], idx) => { return this.team === "WHITE" ? [ySteps, xSteps] : [ySteps.map((step) => step * -1), xSteps.map((step) => step * -1)]})}, 
+        limit() { return (this.moveCount ?? -1) == 0 ? 2 : 1; } 
+    } },
+    KNIGHT: { steps: [...STEP_FUNCTIONS.HORSE],                                    limit: 1, conditions: {} },
+    BISHOP: { steps: [...STEP_FUNCTIONS.DIAGONAL],                                 limit: 0, conditions: {} },
+    ROOK:   { steps: [...STEP_FUNCTIONS.INTERSECTION],                             limit: 0, conditions: {} },
+    QUEEN:  { steps: [...STEP_FUNCTIONS.DIAGONAL, ...STEP_FUNCTIONS.INTERSECTION], limit: 0, conditions: {} },
+    KING:   { steps: [...STEP_FUNCTIONS.DIAGONAL, ...STEP_FUNCTIONS.INTERSECTION], limit: 1, conditions: {} },
+    BLANK:  { steps: [], limit: 0, conditions: {} },
 });
 
 const VALID_TEAM_TYPES = ["WHITE", "BLACK"];
