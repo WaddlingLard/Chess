@@ -71,6 +71,10 @@ function Chessboard({
     const [chessBoard, setChessBoard] = useState({ board: [] });   
     const [boardSignature, setBoardSignature] = useState(null);
     const [pieceLayout, setPieceLayout] = useState({ grid: [] });
+
+    // Store the pieces into the object/hashtable
+    const [pieceTable, setPieceTable] = useState({ table: {} });
+
     const [gameStarted, setGameStarted] = useState(false);
 
     // Store the selected tiles after each board generation
@@ -157,6 +161,9 @@ function Chessboard({
         /**@type {Array<Array<Object>>} */
         const grid = [];
 
+        /**@type {Record<string, PieceInformation>} */
+        const pieceLocations = {};        
+
         // Iterate over the dimensions to make a base grid
         for (let rIdx = 0; rIdx < width; rIdx++) {
 
@@ -172,13 +179,19 @@ function Chessboard({
                 if (ignorePieceRow) {
                     data.piece = null;
                 } else {
-                    data.piece = { ...currentPieceRow[cIdx] };
-                    data.piece.team = isOtherTeam(rIdx) ? "BLACK" : "WHITE"
+                    const pieceData = { ...currentPieceRow[cIdx], ...{ team: isOtherTeam(rIdx) ? "BLACK" : "WHITE", moveCount: 0 }};
+
+                    // Add to the piece location table
+                    pieceLocations[JSON.stringify(data)] = { ...pieceData }; 
+                    data.piece = { ...pieceData };
                 }
-                grid[rIdx][cIdx] = data; 
+                
+                data.tile = { selected: false, validPath: false };
+                grid[rIdx][cIdx] = data;
             }
         }
 
+        setPieceTable({ table: pieceLocations });
         return grid;
     }
 
