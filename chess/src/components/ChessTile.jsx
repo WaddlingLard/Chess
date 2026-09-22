@@ -3,6 +3,7 @@ import { DEFAULT_TILE_SIZE } from "./Chessboard";
 import ChessPiece from "./ChessPiece";
 import { PIECE_TYPE } from "./ChessPiece";
 import { useGame } from "../contexts/GameContext";
+import { useSelect } from "../contexts/SelectContext";
 
 const TILE_STATE = Object.freeze({
     EMPTY: "EMPTY",
@@ -20,6 +21,8 @@ function ChessTile({
     // const { tempPieceLayout, setTempPieceLayout } = templateGrid;
 
     // const { boardState, setBoardState } = useGame();
+
+    const { selectedPiece, setSelectedPiece } = useSelect();
     const { chessBoard, setChessBoard } = updateBoard;
     
     // Add more variables for constructorData if needed
@@ -41,7 +44,7 @@ function ChessTile({
     // States that trigger additional functionality/UI
     const [isHoveringTile, setIsHoveringTile] = useState(false);
     const [isSelected, setIsSelected] = useState(false);
-    
+
     const [tileColor, setTileColor] = useState(undefined);
 
     // Reference to itself
@@ -76,7 +79,7 @@ function ChessTile({
         if (isEmpty) {
             // New piece on the tile
             setCurrentState(TILE_STATE.HOLDING_PIECE);
-            setChessPieceHolding({...PIECE_TYPE[piece.name],  ...{ team: piece.team }});
+            setChessPieceHolding({ ...piece });
             return;
         }
 
@@ -84,7 +87,7 @@ function ChessTile({
         let pieceIsCaptured = chessPieceHolding.team !== piece.team;
 
         if (pieceIsCaptured) {
-            setChessPieceHolding({...PIECE_TYPE[piece.name], ...{ team: piece.team }});
+            setChessPieceHolding({ ...piece });
             return;
         }        
 
@@ -104,17 +107,29 @@ function ChessTile({
     }
 
     const handleSelection = () => {
-        setChessBoard({ 
-            board: 
-            chessBoard.board.map((row, rIdx) => 
-                row.map((tileData, cIdx) => {
-                    if (rIdx === position.row && cIdx == position.col) {
-                        return { ...tileData, ...{ tile: { ...tile, selected: !isSelected }} }; 
-                    }
-                    return tileData;
-                })
-            )
-        })
+        if (selectedPiece === null) {
+            setSelectedPiece({ y: position.row, x: position.col, piece: {...chessPieceHolding}});
+            return;
+        }
+        
+        
+        if (selectedPiece.x === position.col && selectedPiece.y === position.row) {
+            // Selection already on tile, untoggling
+            setSelectedPiece(null);    
+        } else {
+            setSelectedPiece({ y: position.row, x: position.col, piece: {...chessPieceHolding}});
+        }
+        // setChessBoard({ 
+        //     board: 
+        //     chessBoard.board.map((row, rIdx) => 
+        //         row.map((tileData, cIdx) => {
+        //             if (rIdx === position.row && cIdx == position.col) {
+        //                 return { ...tileData, ...{ tile: { ...tile, selected: !isSelected }} }; 
+        //             }
+        //             return tileData;
+        //         })
+        //     )
+        // })
     }
     
 

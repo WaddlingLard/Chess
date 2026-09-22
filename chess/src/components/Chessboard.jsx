@@ -61,6 +61,7 @@ function Chessboard({
     
     // const { tempPieceLayout, setTempPieceLayout } = template;
     // const { boardState, setBoardState } = useGame();
+    const { selectedPiece, setSelectedPiece } = useSelect();
     const { gameStatus, setGameStatus } = useGame();
 
     const [dimension, setDimension] = useState({
@@ -197,16 +198,16 @@ function Chessboard({
 
     /**
      * Generate the valid tiles that the selected tile/piece can click on to move too
-     * @param {Point} selectedTile 
+     * @param {PieceContext} piece 
      * @param {Record<string, PieceInformation>} pieceLocations 
      * @param {TileData[][]} gameBoard 
      * @returns {Point[]}
      */
-    const generateValidMoves = (selectedTile, pieceLocations, gameBoard) => {
+    const generateValidMoves = (selectedPiece, pieceLocations, gameBoard) => {
         // Get the piece that belongs to the selectedTile
         
         /**@type {PieceInformation & {moveSystem: MoveSystem | undefined}} */
-        let pieceInfo = {...pieceLocations[JSON.stringify(selectedTile)]};
+        let pieceInfo = {...selectedPiece.piece};
         pieceInfo = Object.assign(pieceInfo, { moveSystem: {...PIECE_MOVE_SYSTEM[pieceInfo.name]}});
         /**@type {Point[]} */
         const validMovePath = [];
@@ -230,7 +231,7 @@ function Chessboard({
         console.log(steps, limit, conditions);
 
         let moveSteps = [...steps];
-        const [currY, currX] = [selectedTile.y, selectedTile.x]; 
+        const [currY, currX] = [selectedPiece.y, selectedPiece.x]; 
         for (let i = 0; i !== (limit === 0 ? -1 : limit) ; i++) {
             
             if (moveSteps.length === 0) {
@@ -278,6 +279,24 @@ function Chessboard({
     }
 
     /**
+     * Clears the gameBoard of any selection set true
+     * @param {TileData[][]} gameBoard
+     * @return {TileData[][]} 
+     */
+    const clearSelection = (gameBoard) => {
+        const currentBoard = [...gameBoard];
+
+        for (let rowIdx = 0; rowIdx < currentBoard.length; rowIdx++) {
+            for (let colIdx = 0; colIdx < currentBoard[0].length; colIdx++) {
+                currentBoard[rowIdx][colIdx].tile.selected = false;
+            }
+        }
+
+        return currentBoard;
+    }
+
+    /**
+     * Clears the gameBoard of any validPaths set true 
      * @param {TileData[][]} gameBoard
      * @returns {TileData[][]}
      */
@@ -301,44 +320,25 @@ function Chessboard({
 
     /**
      * Get the component the properly reflects the board state
-     * @param {Array<Array<Object>>} gameGrid 
+     * @param {Array<Array<Object>>} gameGrid
+     * @param {PieceContext | null} selectedPiece 
      * @returns {BoardReturn}
      */
-    const drawBoard = (gameGrid) => {
+    const drawBoard = (gameGrid, selectedPiece) => {
         
         // console.log('drawing boad!')
         const { board } = gameGrid;
         let currentBoard = [...board];
-        const newSelected = /**@type {{ x: number | null, y: number | null }} */({ x: null, y: null });
-        const existingSelection = selectedTile.current.x !== null && selectedTile.current.y !== null;
-
-        const matchSelection = ({x, y}) => {
-            return x === selectedTile.current.x && y === selectedTile.current.y;
-        }
-
-        const selectedTiles = currentBoard.map((row, rIdx) => row.filter((tileData, index) => tileData.tile.selected)).flat();
-        if (selectedTiles.length === 0) {
-            // Clear the path and set the selection point to nothing
-            /**@type {Point} */
-            const clearedPoint = { x: null, y: null };
-            selectedTile.current = clearedPoint;
-            currentBoard = clearPath(currentBoard);
-        } else {
-            for (const tile of selectedTiles) {
-                const alreadySelected = matchSelection(tile);
-                if (!alreadySelected) {
-                    newSelected.x = tile.x;
-                    newSelected.y = tile.y;
-                    existingSelection ? (currentBoard[selectedTile.current.y][selectedTile.current.x].tile.selected = false) : null;
-                }
-            }
-        }
-
-        if (newSelected.x !== null && newSelected.y !== null) {
+        
+        currentBoard = clearSelection(currentBoard);
+       
+        if (selectedPiece === null) {
+            // Nothing...
+        } else if (selectedPiece.x !== null && selectedPiece.y !== null) {
             // Clear previous selected tile
-            // const [x, y] = /** @type {[number, number]} */ (selectedTiles.current);
-            selectedTile.current = newSelected;
-            const validMoveTiles = generateValidMoves(selectedTile.current, pieceTable.table, currentBoard);
+            // selectedTile.current = newSelected;
+            const validMoveTiles = generateValidMoves(selectedPiece, pieceTable.table, currentBoard);
+            
             // Clear the current tile path
             currentBoard = clearPath(currentBoard);
             validMoveTiles.forEach((currentPoint) => {
@@ -408,8 +408,8 @@ function Chessboard({
             return nulledBoard;
         }
 
-        console.log(selectedTile);
-        const { component, value } = drawBoard(chessBoard);
+        // console.log(selectedTile);
+        const { component, value } = drawBoard(chessBoard, selectedPiece);
         setChessBoard({ board: value });
 
         // if (!gameStarted) {
@@ -417,7 +417,7 @@ function Chessboard({
         // }
 
         return component;
-    }, [boardSignature]);
+    }, [boardSignature, selectedPiece]);
 
     // Update the gameGrid when the memoized function getMemoizedBoard has created a new value
     // useEffect(() => {
