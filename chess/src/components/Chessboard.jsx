@@ -34,18 +34,18 @@ export const DEFAULT_PIECE_LAYOUT = [
         PIECE_TYPE.BLANK,
     ],
     [],
-    // [],
+    [],
     [...Array(DEFAULT_BOARD_DIMENSION).fill(PIECE_TYPE.PAWN)],
-    [
-        PIECE_TYPE.ROOK,
-        PIECE_TYPE.KNIGHT,
-        PIECE_TYPE.BISHOP,
-        PIECE_TYPE.QUEEN,
-        PIECE_TYPE.KING,
-        PIECE_TYPE.BISHOP,
-        PIECE_TYPE.KNIGHT,
-        PIECE_TYPE.ROOK,
-    ],
+    // [
+    //     PIECE_TYPE.ROOK,
+    //     PIECE_TYPE.KNIGHT,
+    //     PIECE_TYPE.BISHOP,
+    //     PIECE_TYPE.QUEEN,
+    //     PIECE_TYPE.KING,
+    //     PIECE_TYPE.BISHOP,
+    //     PIECE_TYPE.KNIGHT,
+    //     PIECE_TYPE.ROOK,
+    // ],
 ];
 
 // looks intense, but all it is doing is constructing an array based on the
@@ -500,9 +500,12 @@ function Chessboard({
         
         if (selectedPiece === null) {
             // Nothing...
+            currentBoard = clearSelection(currentBoard);
+            currentBoard = clearPath(currentBoard);
         } else if (selectedPiece.x !== null && selectedPiece.y !== null) {
             // Clear previous selected tile
             // selectedTile.current = newSelected;
+            currentBoard[selectedPiece.y][selectedPiece.x].tile.selected = true;
             const validMoveTiles = generateValidMoves(selectedPiece, pieceTable.current, currentBoard);
             
             // Clear the current tile path
