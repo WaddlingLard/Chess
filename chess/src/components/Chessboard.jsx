@@ -34,8 +34,8 @@ export const DEFAULT_PIECE_LAYOUT = [
         PIECE_TYPE.BLANK,
     ],
     [],
-    [],
-    // [...Array(DEFAULT_BOARD_DIMENSION).fill(PIECE_TYPE.PAWN)],
+    // [],
+    [...Array(DEFAULT_BOARD_DIMENSION).fill(PIECE_TYPE.PAWN)],
     [
         PIECE_TYPE.ROOK,
         PIECE_TYPE.KNIGHT,
@@ -438,6 +438,9 @@ function Chessboard({
                 setErrorMessage("Piece failed validation at move where it was requested!");
                 setErrorFlag(true);
             }
+
+            // Update the move count
+            pieceTable[pieceTableKey].moveCount += 1;
 
             // Move the piece
             currentBoard[y][x].piece = null; 
