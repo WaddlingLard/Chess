@@ -106,6 +106,15 @@ function ChessPiece({
         setTeamAffiliation(teamType);
     }, []);
 
+    useEffect(() => {
+        if (pieceType !== PIECE_TYPE[name]) {
+            setPieceType(PIECE_TYPE[name]);
+        }
+        if (teamAffiliation !== teamType) {
+            setTeamAffiliation(teamType);
+        }
+    }, [name, teamType])
+
     const chessPieceDataHandler = (event) => {
         // console.log("Piece has been grabbed!", event);
 
