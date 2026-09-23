@@ -4,6 +4,10 @@ import ChessPiece from "./ChessPiece";
 import { PIECE_TYPE } from "./ChessPiece";
 import { useGame } from "../contexts/GameContext";
 import { useSelect } from "../contexts/SelectContext";
+import { useMoves } from "../contexts/MoveContext";
+
+/**@typedef {import('./Chessboard').TileData} TileData*/
+/**@typedef {{ selected: boolean, validPath: boolean }} TileConditionData */
 
 const TILE_STATE = Object.freeze({
     EMPTY: "EMPTY",
@@ -12,8 +16,15 @@ const TILE_STATE = Object.freeze({
     TAKEN: "TAKEN"
 });
 
+/**
+ * 
+ * @param {{ constructorData: TileData, updateBoard: {
+ * chessBoard: TileData[][], 
+ * setChessBoard: React.Dispatch<SetStateAction<TileData[][]>> }} props 
+ * @returns ___________
+ */
 function ChessTile({
-    constructorData = { x: 0, y: 0, piece: null, tile: null },
+    constructorData,
     updateBoard,
     // templateGrid = { tempPieceLayout: { grid: [] }, setTempPieceLayout: null },
 }) {
@@ -22,12 +33,15 @@ function ChessTile({
 
     // const { boardState, setBoardState } = useGame();
 
+    const { addChessMove } = useMoves();
     const { selectedPiece, setSelectedPiece } = useSelect();
     const { chessBoard, setChessBoard } = updateBoard;
     
     // Add more variables for constructorData if needed
     const { x, y, piece, tile } = constructorData; 
-    const { selected } = tile;
+
+    /**@type {TileConditionData} */
+    const { selected, validPath } = tile;
 
     // const parentContext = useContext(TileContext);
 
@@ -105,14 +119,16 @@ function ChessTile({
         }
         setIsHoveringTile(isMouseOn);
     }
+    
+    const handleMove = () => {
+        addChessMove({ newX: position.col, newY: position.row });
+    }
 
     const handleSelection = () => {
         if (selectedPiece === null) {
             setSelectedPiece({ y: position.row, x: position.col, piece: {...chessPieceHolding}});
             return;
-        }
-        
-        
+        }  
         if (selectedPiece.x === position.col && selectedPiece.y === position.row) {
             // Selection already on tile, untoggling
             setSelectedPiece(null);    
@@ -286,8 +302,12 @@ function ChessTile({
                 }}
                 
                 onClick={(event) => {
-                    handleSelection();
-                    console.log(`Clicked on row: ${position.row}, col: ${position.col}`)
+                    if (validPath) {
+                        handleMove();
+                    } else {
+                        handleSelection();
+                    }
+                    // console.log(`Clicked on row: ${position.row}, col: ${position.col}`)
                 }}
 
                 // onDragEnter={(e) => {
@@ -308,15 +328,15 @@ function ChessTile({
                     // height: parentContext.tileSize,
                     width: `${DEFAULT_TILE_SIZE}px`,
                     height: `${DEFAULT_TILE_SIZE}px`,
-                    backgroundColor: (isSelected || isHoveringTile) ? "#B4D5FF" : tileColor,
+                    backgroundColor: validPath ? "rgb(255, 0, 0)" : (isSelected || isHoveringTile) ? "#B4D5FF" : tileColor,
                     transitionDuration: "300ms",
                     transitionProperty: "background-color",
                     transitionTimingFunction: "ease-out",
                     transitionDelay: "0ms",
                     display: "flex",
                     justifyContent: "center",
-                    pointerEvents: currentState === TILE_STATE.EMPTY ? "none" : "all",
-                    cursor: currentState === TILE_STATE.EMPTY ? "auto" : "pointer"
+                    pointerEvents: (currentState === TILE_STATE.EMPTY && !validPath) ? "none" : "all",
+                    cursor: (currentState === TILE_STATE.EMPTY && !validPath) ? "auto" : "pointer"
                 }}
             >
                 <div ref={dropDiv}>{currentState === TILE_STATE.EMPTY ? null : 
