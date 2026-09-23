@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useMemo, useRef } from "react";
+import React, { useState, useEffect, useContext, useMemo, useCallback, useRef } from "react";
 import { DEFAULT_TILE_SIZE } from "./Chessboard";
 import ChessPiece from "./ChessPiece";
 import { PIECE_TYPE } from "./ChessPiece";
@@ -147,7 +147,22 @@ function ChessTile({
         //     )
         // })
     }
-    
+
+    const getTileColor = useCallback(() => {
+        if (validPath) {
+            if (currentState !== TILE_STATE.EMPTY) {
+                return "#d80404";
+            } else {
+                return "#33F";
+            }
+        }
+        
+        if (isSelected || isHoveringTile) {
+            return "#B4D5FF";
+        }
+
+        return tileColor;
+    }, [isSelected, isHoveringTile, validPath, currentState]);
 
     if (position.row === undefined || position.col === undefined) {
         return null;
@@ -328,7 +343,7 @@ function ChessTile({
                     // height: parentContext.tileSize,
                     width: `${DEFAULT_TILE_SIZE}px`,
                     height: `${DEFAULT_TILE_SIZE}px`,
-                    backgroundColor: validPath ? "rgb(255, 0, 0)" : (isSelected || isHoveringTile) ? "#B4D5FF" : tileColor,
+                    backgroundColor: getTileColor() ?? tileColor,
                     transitionDuration: "300ms",
                     transitionProperty: "background-color",
                     transitionTimingFunction: "ease-out",

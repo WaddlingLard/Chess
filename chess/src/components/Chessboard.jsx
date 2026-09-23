@@ -245,11 +245,13 @@ function Chessboard({
         /**@type {PieceInformation & {moveSystem: MoveSystem | undefined}} */
         let pieceInfo = {...selectedPiece.piece};
         pieceInfo = Object.assign(pieceInfo, { moveSystem: {...PIECE_MOVE_SYSTEM[pieceInfo.name]}});
+        const { team } = pieceInfo;
+        const { conditions } = pieceInfo.moveSystem;
+        // let { steps, limit, conditions } = PIECE_MOVE_SYSTEM[pieceInfo.name];
+        
         /**@type {Point[]} */
         const validMovePath = [];
-        // let { steps, limit, conditions } = PIECE_MOVE_SYSTEM[pieceInfo.name];
-        const { conditions } = pieceInfo.moveSystem;
-
+        
         if (conditions) {
             for (const key in pieceInfo.moveSystem) {
                 // console.log(key);
@@ -298,6 +300,13 @@ function Chessboard({
                 if (JSON.stringify(newValidMove) in pieceLocations) {
                     // Piece existing on tile
                     // NOTE: This is where capture logic occurs
+
+                    // NOTE: This is rather elementary logic, should use a player context to make the decision
+                    const obstructingPiece = pieceLocations[JSON.stringify(newValidMove)];
+                    if (obstructingPiece.team && obstructingPiece.team !== team){
+                        // Captureable piece
+                        validMovePath.push(newValidMove);
+                    }
 
                     moveSteps = moveSteps.filter((step, idx) => { return step[0] != ySteps && step[1] != xSteps });
                 } else {
