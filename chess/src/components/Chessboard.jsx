@@ -431,9 +431,14 @@ function Chessboard({
             const { x, y, newX, newY, piece } = /**@type {ChessMove} */(move);
             const pieceTableKey = JSON.stringify({x, y});
             const newPieceTableKey = JSON.stringify({ x: newX, y: newY });
+            // let capturePieceValidated = undefined;
 
             // NOTE: Piece validation is checked for, but might need to account for tile (newX, newY) as well
             const pieceValidated = pieceTableKey in pieceTable && JSON.stringify(piece) === JSON.stringify(pieceTable[pieceTableKey]);
+            // if (move.type === 'CAPTURE') {
+            //     capturePieceValidated = newPieceTableKey in pieceTable && piece.team !== pieceTable[newPieceTableKey].team;
+            // }
+            // if (!pieceValidated || capturePieceValidated !== undefined && !capturePieceValidated) {
             if (!pieceValidated) {
                 setErrorMessage("Piece failed validation at move where it was requested!");
                 setErrorFlag(true);
@@ -444,6 +449,12 @@ function Chessboard({
 
             // Move the piece
             currentBoard[y][x].piece = null; 
+            
+            // if (move.type === 'CAPTURE') {
+            //     // Delete the residing piece first
+            //     currentBoard[newY][newX].piece = null;
+            // }
+
             currentBoard[newY][newX].piece = pieceTable[pieceTableKey];
 
             // Change the table to reflect the piece location
