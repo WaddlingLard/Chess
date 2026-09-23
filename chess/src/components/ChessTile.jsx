@@ -6,6 +6,7 @@ import { useGame } from "../contexts/GameContext";
 import { useSelect } from "../contexts/SelectContext";
 import { useMoves } from "../contexts/MoveContext";
 
+/**@typedef {import('../contexts/MoveContext').MoveType} MoveType */
 /**@typedef {import('./Chessboard').TileData} TileData*/
 /**@typedef {{ selected: boolean, validPath: boolean }} TileConditionData */
 
@@ -121,7 +122,7 @@ function ChessTile({
     }
     
     const handleMove = () => {
-        addChessMove({ newX: position.col, newY: position.row });
+        addChessMove({ newX: position.col, newY: position.row, type: currentState === TILE_STATE.HOLDING_PIECE ? 'CAPTURE' : 'MOVE' });
     }
 
     const handleSelection = () => {
