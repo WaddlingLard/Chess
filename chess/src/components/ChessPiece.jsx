@@ -27,9 +27,13 @@ import { STEP_FUNCTIONS } from "../types/piece_moves";
  * @typedef {{ 
  * name: string, 
  * icon: any, 
- * team: "WHITE" | "BLACK" | undefined 
+ * team?: TeamType 
  * moveCount: number
  * }} PieceInformation
+ */
+
+/**
+ * @typedef {"WHITE" | "BLACK"} TeamType
  */
 
 /**
@@ -47,12 +51,33 @@ export const PIECE_TYPE = Object.freeze({
     BLANK:  { name: null,      icon: null }
 });
 
+/**
+ * Invert the moves provided the team condition is met
+ * @param {number[][]} stepTuple 
+ * @param {TeamType} thisTeam
+ * @param {TeamType} teamCondition
+ * @returns {number[][]}
+ */
+const invertMovesUponTeamType = (stepTuple, thisTeam, teamCondition) => {
+    const [ySteps, xSteps] = stepTuple;
+    return thisTeam === teamCondition ? [ySteps, xSteps] : [ySteps.map((step) => step * -1), xSteps.map((step) => step * -1)];
+}
+
+/**
+ * How the system works:
+ * Pieces will have a MOVE_SYSTEM that contains the steps, limit, and conditions
+ * While most pieces will follow their initial provided data, others will require a check beforehand (*eyes pawn*)
+ * This is where conditions come in, they compute during runtime to recalculate the pieces initial data
+ * Following this system, one could create any chess piece they desire. As long as their behavior can be tracked
+ * via the step functions (steps), move path size (limit), and capture conditions (capture)
+ */
 /**@type {Record<ChessPieceType, MoveSystem} */
 export const PIECE_MOVE_SYSTEM = Object.freeze({
     PAWN:   { steps: [...STEP_FUNCTIONS.FORWARD],                                  limit: 1, 
         conditions: { 
-        steps() { return PIECE_MOVE_SYSTEM.PAWN.steps.map(([ySteps, xSteps], idx) => { return this.team === "WHITE" ? [ySteps, xSteps] : [ySteps.map((step) => step * -1), xSteps.map((step) => step * -1)]})}, 
-        limit() { return (this.moveCount ?? -1) == 0 ? 2 : 1; } 
+        steps() { return PIECE_MOVE_SYSTEM.PAWN.steps.map((stepTuple) => invertMovesUponTeamType(stepTuple, this.team, "WHITE"))}, 
+        limit() { return (this.moveCount ?? -1) == 0 ? 2 : 1; },
+        capture() { return STEP_FUNCTIONS.LEFT_AND_RIGHT.map((stepTuple) => invertMovesUponTeamType(stepTuple, this.team, "WHITE"))} 
     } },
     KNIGHT: { steps: [...STEP_FUNCTIONS.HORSE],                                    limit: 1, conditions: {} },
     BISHOP: { steps: [...STEP_FUNCTIONS.DIAGONAL],                                 limit: 0, conditions: {} },
