@@ -4,20 +4,38 @@ import ChessTile from "./ChessTile";
 import ChessPiece, { PIECE_MOVE_SYSTEM, PIECE_TYPE } from "./ChessPiece";
 import { GAME_STATUS, useGame } from "../contexts/GameContext";
 import { useSelect } from "../contexts/SelectContext";
+import { useMoves } from "../contexts/MoveContext";
 
 // Importing types
 /**@typedef {import('./ChessPiece').PieceInformation} PieceInformation*/
-/**@typedef {import('./ChessTile').TileConditionData} TileConditionData */
 /**@typedef {import('./ChessPiece').MoveSystem} MoveSystem */
+/**@typedef {import('./ChessTile').TileConditionData} TileConditionData */
+/**@typedef {import('../contexts/SelectContext').PieceContext} PieceContext */
+/**@typedef {import('../contexts/MoveContext').ChessMove} ChessMove */
 // export const TileContext = createContext(undefined);
+
+/**
+ * @typedef {Point & { piece: PieceInformation, tile: TileConditionData}} TileData
+ */
+
 export const DEFAULT_BOARD_DIMENSION = 8;
 export const DEFAULT_TILE_SIZE = 60
 
 // The typical layout for a chessboard
 export const DEFAULT_PIECE_LAYOUT = [
+    [
+        PIECE_TYPE.BLANK,
+        PIECE_TYPE.BLANK,
+        PIECE_TYPE.BLANK,
+        PIECE_TYPE.BLANK,
+        PIECE_TYPE.BLANK,
+        PIECE_TYPE.BLANK,
+        PIECE_TYPE.BLANK,
+        PIECE_TYPE.BLANK,
+    ],
     [],
     [],
-    [...Array(DEFAULT_BOARD_DIMENSION).fill(PIECE_TYPE.PAWN)],
+    // [...Array(DEFAULT_BOARD_DIMENSION).fill(PIECE_TYPE.PAWN)],
     [
         PIECE_TYPE.ROOK,
         PIECE_TYPE.KNIGHT,
@@ -49,6 +67,8 @@ export const getEmptyPieceGrid = (height, width) => {
         });
 
     return emptyGrid;
+
+    
 };
 
 function Chessboard({
@@ -61,6 +81,7 @@ function Chessboard({
     
     // const { tempPieceLayout, setTempPieceLayout } = template;
     // const { boardState, setBoardState } = useGame();
+    const { chessMoves } = useMoves();
     const { selectedPiece, setSelectedPiece } = useSelect();
     const { gameStatus, setGameStatus } = useGame();
 
@@ -68,19 +89,33 @@ function Chessboard({
         width: undefined,
         height: undefined
     });
+
+    /**
+     * @typedef {Point & { piece: PieceInformation?, tile: TileConditionData}} TileData
+     */
     
-    const [chessBoard, setChessBoard] = useState({ board: [] });   
+    // Make sure to wrap items in () if you need to cast to the type
+    const [chessBoard, setChessBoard] = useState(/**@type {{ board: TileData[][] }}*/({ board: [] }));   
     const [boardSignature, setBoardSignature] = useState(null);
     const [pieceLayout, setPieceLayout] = useState({ grid: [] });
 
+    const [verificationMode, setVerificationMode] = useState(true);
+
     // Store the pieces into the object/hashtable
-    const [pieceTable, setPieceTable] = useState({ table: {} });
+    // const [pieceTable, setPieceTable] = useState({ table: {} });
+
+    /**@type {React.Ref<Record<string, PieceInformation>} */
+    const pieceTable = useRef({});
+
+    /**@type {React.Ref<Array<ChessMove>>} */
+    const processedMoves = useRef([]);
 
     const [gameStarted, setGameStarted] = useState(false);
 
     // Store the selected tiles after each board generation
-    /**@type <React.RefObject<Record["x" | "y", number | null]> */
-    const selectedTile = useRef({ x: null, y: null });
+    // /**@typedef {{ x: number | null, y: number | null }} Point */
+    // /**@type <React.RefObject<Point> */
+    // const selectedTile = useRef({ x: null, y: null });
 
     // const [gameGridCreated, setGameGridCreated] = useState(false);
     // const [tileRenderSize, setTileRenderSize] = useState(DEFAULT_TILE_SIZE);
@@ -149,9 +184,10 @@ function Chessboard({
 
     /**
      * Builds a grid and adds the piece/tile information
+     * @param {Pick<PieceInformation, "name" | "icon">} chessPieceGrid
      * @param {number} width 
      * @param {number} height 
-     * @returns {Array<Array<Record<"x" | "y", number>>}
+     * @returns {Array<Array<TileData>>}
      */
     const buildGameGrid = (chessPieceGrid, width, height) => {
     
@@ -159,7 +195,7 @@ function Chessboard({
             return currentRow >= height / 2;
         };
 
-        /**@type {Array<Array<Object>>} */
+        /**@type {Array<Array<TileData>>} */
         const grid = [];
 
         /**@type {Record<string, PieceInformation>} */
@@ -176,8 +212,7 @@ function Chessboard({
             grid.push([]);
             for (let cIdx = 0; cIdx < height; cIdx++) {
                 const data = { x: cIdx, y: rIdx };
-                data.tile = { selected: false };
-                if (ignorePieceRow) {
+                if (ignorePieceRow || currentPieceRow[cIdx] == PIECE_TYPE.BLANK) {
                     data.piece = null;
                 } else {
                     const pieceData = { ...currentPieceRow[cIdx], ...{ team: isOtherTeam(rIdx) ? "BLACK" : "WHITE", moveCount: 0 }};
@@ -192,7 +227,8 @@ function Chessboard({
             }
         }
 
-        setPieceTable({ table: pieceLocations });
+        // Save the piece locations into the table
+        Object.assign(pieceTable.current, pieceLocations);
         return grid;
     }
 
@@ -313,6 +349,103 @@ function Chessboard({
     }
 
     /**
+     * Checks and see if any moves have been tampered with
+     * @param {ChessMove[]} moves 
+     * @param {ChessMove[]} alreadyProcessed
+     * @return {boolean} 
+     */
+    const validateMoves = (moves, alreadyProcessed) => {
+
+        const processedMoves = [...alreadyProcessed];
+
+        // Consider move validation logic 
+        let verifiedMoves = 0;
+        for (const [index, move] of moves.entries()) {
+
+            if (index >= processedMoves.length) {
+                break;
+            }
+
+            const movesAreEqual = JSON.stringify(move) === JSON.stringify(processedMoves[index]);
+
+            if (movesAreEqual) {
+                verifiedMoves += 1;
+            }
+
+        }
+        if (verifiedMoves !== processedMoves.length) {
+            return false;
+        }
+        
+        return true;
+    }
+
+    /**
+     * Gets the new chess moves that haven't been processed and saves the new moves into the processedMoves reference
+     * @param {ChessMove[]} moves 
+     * @param {ChessMove[]} alreadyProcessed
+     * @param {boolean} verifyMoves
+     * @return {ChessMove[]} 
+     */
+    const getNewMoves = (moves, alreadyProcessed, verifyMoves) => {
+        /**@type {ChessMove[]} */
+        const newMoves = [];
+        const moveDifference = moves.length - alreadyProcessed.length;
+
+        if (verifyMoves) {
+            const validationResult = validateMoves(moves, alreadyProcessed);
+            if (!validationResult) {
+                 throw new Error("Moves have been tampered with!");
+            }
+        }
+        
+        newMoves.push(...moves.slice(moves.length - moveDifference));
+        return newMoves;
+
+    }
+
+    /**
+     * Mutate the provided gameBoard with the pieces reflecting the provided moves
+     * @param {TileData[][]} gameBoard 
+     * @param {ChessMove[]} moves 
+     * @param {Record<string, PieceInformation>} pieceTable
+     * @param {React.Ref<ChessMove[]>} processedMoves
+     * @returns {TileData[][]}
+     */
+    const enactMoves = (gameBoard, moves, pieceTable, processedMoves) => {
+        const currentBoard = [...gameBoard];
+
+        /**@type {ChessMove[]} */
+        const enactedMoves = [];
+
+        for (const move of moves) {
+            const { x, y, newX, newY, piece } = /**@type {ChessMove} */(move);
+            const pieceTableKey = JSON.stringify({x, y});
+            const newPieceTableKey = JSON.stringify({ x: newX, y: newY });
+
+            // NOTE: Piece validation is checked for, but might need to account for tile (newX, newY) as well
+            const pieceValidated = pieceTableKey in pieceTable && JSON.stringify(piece) === JSON.stringify(pieceTable[pieceTableKey]);
+            if (!pieceValidated) {
+                setErrorMessage("Piece failed validation at move where it was requested!");
+                setErrorFlag(true);
+            }
+
+            // Move the piece
+            currentBoard[y][x].piece = null; 
+            currentBoard[newY][newX].piece = pieceTable[pieceTableKey];
+
+            // Change the table to reflect the piece location
+            pieceTable[newPieceTableKey] = pieceTable[pieceTableKey];
+            delete pieceTable[pieceTableKey];
+            enactedMoves.push(move);
+        }
+
+        processedMoves.current = processedMoves.current.concat(enactedMoves);
+
+        return currentBoard;
+    }
+
+    /**
      * @typedef {Object} BoardReturn
      * @property {Element | null} component
      * @property {Array<Array<Object>> | null} value
@@ -322,22 +455,32 @@ function Chessboard({
      * Get the component the properly reflects the board state
      * @param {Array<Array<Object>>} gameGrid
      * @param {PieceContext | null} selectedPiece 
+     * @param {ChessMove[]} chessMoves
      * @returns {BoardReturn}
      */
-    const drawBoard = (gameGrid, selectedPiece) => {
+    const drawBoard = (gameGrid, selectedPiece, chessMoves) => {
         
         // console.log('drawing boad!')
         const { board } = gameGrid;
         let currentBoard = [...board];
         
         currentBoard = clearSelection(currentBoard);
-       
+
+        if (chessMoves.length > 0) {
+            /**@type {ChessMove[]} */
+            const moves = getNewMoves(chessMoves, processedMoves.current, verificationMode);
+            
+            // Implement enactMoves
+            currentBoard = enactMoves(currentBoard, moves, pieceTable.current, processedMoves);
+            currentBoard = clearPath(currentBoard);
+        }
+        
         if (selectedPiece === null) {
             // Nothing...
         } else if (selectedPiece.x !== null && selectedPiece.y !== null) {
             // Clear previous selected tile
             // selectedTile.current = newSelected;
-            const validMoveTiles = generateValidMoves(selectedPiece, pieceTable.table, currentBoard);
+            const validMoveTiles = generateValidMoves(selectedPiece, pieceTable.current, currentBoard);
             
             // Clear the current tile path
             currentBoard = clearPath(currentBoard);
@@ -409,7 +552,7 @@ function Chessboard({
         }
 
         // console.log(selectedTile);
-        const { component, value } = drawBoard(chessBoard, selectedPiece);
+        const { component, value } = drawBoard(chessBoard, selectedPiece, chessMoves.moveList);
         setChessBoard({ board: value });
 
         // if (!gameStarted) {
@@ -417,7 +560,7 @@ function Chessboard({
         // }
 
         return component;
-    }, [boardSignature, selectedPiece]);
+    }, [boardSignature, selectedPiece, chessMoves]);
 
     // Update the gameGrid when the memoized function getMemoizedBoard has created a new value
     // useEffect(() => {
