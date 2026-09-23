@@ -1,0 +1,44 @@
+PAWN
+
+If move counter < 1
+	current location.y + up to 2
+else
+	current location.y + 1
+
+KING is a KNIGHT and BISHOP with a CEILING of 1
+
+[
+	[(-1,-1), (-1, 0), (-1,1)],
+	[(0, -1), (0,  0), (0, 1)],
+	[(1, -1), (1,  0), (1, 1)]
+]
+
+for i in range(-1, 2):
+	for j in range (-1, 2):
+		current location.x + i
+		current location.y + j
+
+QUEEN is a KNIGHT and BISHOP
+
+KNIGHT
+
+MOVE STRUCTURE: a list of arrays(tuples) that represent the step functions, with a ceiling value (0 for stop till out of bounds)
+
++or-2 for y or x, check +or-1 for opposite axis
+could generate the steps like ([])
+([-2,0],[0,1]), ([-2,0],[0,-1]), ([2,0],[0,1]), ([2,0],[0,-1]), ([0,-2], [1,0]), ([0,-2],[-1,0]), ([0,2],[1,0]), ([0,2],[-1,0])
+[[[Move y],[Move x]]]
+BISHOP
+
+step functions
+(-1,-1), (-1,1), (1,1) (1,-1)`
+
+ROOK
+
+step functions
+(0, -1), (-1, 0), (0, 1), (1, 0)
+
+
+DESIGN
+get piece -> pull out the move generator from tile function -> store moves in queue like state (to handle in BFS fashion) 
+-> compare moves to see if tiles are blocked by existing pieces -> if blocked, means can be taken (handle pawns separately)

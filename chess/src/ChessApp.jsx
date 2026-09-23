@@ -4,8 +4,10 @@ import viteLogo from "/vite.svg";
 import "./App.css";
 import Chessboard, { DEFAULT_BOARD_DIMENSION, DEFAULT_PIECE_LAYOUT, getEmptyPieceGrid } from "./components/Chessboard";
 import SplashScreen from "./components/SplashScreen";
-
-export const BoardContext = createContext();
+import { BoardProvider } from "./contexts/BoardContext";
+import { GameProvider } from "./contexts/GameContext";
+import { SelectProvider } from "./contexts/SelectContext";
+import { MoveProvider } from "./contexts/MoveContext";
 
 function ChessApp() {
     const [isGameStarted, setIsGameStarted] = useState(false);
@@ -26,46 +28,52 @@ function ChessApp() {
                 <title>Chess!</title>
             </header>
 
-            <BoardContext value={{ globalPieceLayout, setGlobalPieceLayout }}>
-                {!isGameStarted && (
-                    <div style={{ width: "100%", height: "100%" }}>
-                        <SplashScreen
-                            setGameStarter={setIsGameStarted}
-                            boardDimension={boardDimension}
-                            pieceSetup={globalPieceLayout.grid}
-                        />
-                    </div>
-                )}
+            <BoardProvider>
+                <GameProvider>
+                    <SelectProvider>
+                        <MoveProvider>
+                            {!isGameStarted && (
+                                <div style={{ width: "100%", height: "100%" }}>
+                                    <SplashScreen
+                                        setGameStarter={setIsGameStarted}
+                                        boardDimension={boardDimension}
+                                        // pieceSetup={globalPieceLayout.grid}
+                                    />
+                                </div>
+                            )}
 
-                {isGameStarted && (
-                    <div
-                        style={{
-                            // zIndex: 1,
-                            display: "flex",
-                            // width: 'fit-content',
-                            // height: 'fit-content',
-                            // padding: '100px',
-                            // minHeight: '400px',
-                            // minWidth: '400px',
+                            {isGameStarted && (
+                                <div
+                                    style={{
+                                        // zIndex: 1,
+                                        display: "flex",
+                                        // width: 'fit-content',
+                                        // height: 'fit-content',
+                                        // padding: '100px',
+                                        // minHeight: '400px',
+                                        // minWidth: '400px',
 
-                            // margin: 'auto',
-                            // margin: '5%',
-                            padding: "4%",
-                            backgroundColor: "#AF855C",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            overflow: "visible",
-                            fontSize: "2rem",
-                        }}
-                    >
-                        <Chessboard
-                            width={boardDimension.width}
-                            height={boardDimension.height}
-                            pieceSetup={globalPieceLayout.grid}
-                        />
-                    </div>
-                )}
-            </BoardContext>
+                                        // margin: 'auto',
+                                        // margin: '5%',
+                                        padding: "4%",
+                                        backgroundColor: "#AF855C",
+                                        justifyContent: "center",
+                                        alignItems: "center",
+                                        overflow: "visible",
+                                        fontSize: "2rem",
+                                    }}
+                                >
+                                    <Chessboard
+                                        width={boardDimension.width}
+                                        height={boardDimension.height}
+                                        pieceSetup={globalPieceLayout.grid}
+                                    />
+                                </div>
+                            )}
+                        </MoveProvider>
+                    </SelectProvider>
+                </GameProvider>
+            </BoardProvider>
         </>
     );
 }
