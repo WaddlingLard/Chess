@@ -55,6 +55,7 @@ function ChessTile({
     // These two states go hand-in-hand
     const [currentState, setCurrentState] = useState(TILE_STATE.EMPTY);
     const [chessPieceHolding, setChessPieceHolding] = useState(null);
+    // const [pieceSignature, setPieceSignature] = useState(null);
     
     // States that trigger additional functionality/UI
     const [isHoveringTile, setIsHoveringTile] = useState(false);
@@ -81,9 +82,15 @@ function ChessTile({
         setTileColor((x + y) % 2 == 0 ? "#FFF" : "#000");
     }, []);
 
+    // useEffect(() => {
+    //     console.log("Piece holding!", chessPieceHolding);
+    //     setPieceSignature(JSON.stringify(chessPieceHolding));
+    // },[chessPieceHolding])
+
+
     // Resetting tile state if new chessPiece
     useEffect(() => {
-        let isEmpty = currentState === TILE_STATE.EMPTY;
+        const isEmpty = currentState === TILE_STATE.EMPTY;
 
         if (piece === null) {
             setCurrentState(TILE_STATE.EMPTY);
@@ -99,7 +106,7 @@ function ChessTile({
         }
 
         // Check if the piece was captured, will likely need to account for capture logic
-        let pieceIsCaptured = chessPieceHolding.team !== piece.team;
+        const pieceIsCaptured = chessPieceHolding.team !== piece.team;
 
         if (pieceIsCaptured) {
             setChessPieceHolding({ ...piece });
@@ -357,8 +364,9 @@ function ChessTile({
             >
                 <div ref={dropDiv}>{currentState === TILE_STATE.EMPTY ? null : 
                     <ChessPiece
-                    name={chessPieceHolding.name}
-                    teamType={chessPieceHolding.team}
+                        name={chessPieceHolding.name}
+                        teamType={chessPieceHolding.team}
+                        location={{ x: position.row, y: position.col }}
                     />
                 }</div>
             </div>
