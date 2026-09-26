@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useMemo, useRef } from "react";
+import React, { useState, useEffect, useContext, useMemo, useCallback, useRef } from "react";
 import { DEFAULT_TILE_SIZE } from "./Chessboard";
 import ChessPiece from "./ChessPiece";
 import { PIECE_TYPE } from "./ChessPiece";
@@ -6,6 +6,7 @@ import { useGame } from "../contexts/GameContext";
 import { useSelect } from "../contexts/SelectContext";
 import { useMoves } from "../contexts/MoveContext";
 
+/**@typedef {import('../contexts/MoveContext').MoveType} MoveType */
 /**@typedef {import('./Chessboard').TileData} TileData*/
 /**@typedef {{ selected: boolean, validPath: boolean }} TileConditionData */
 
@@ -54,6 +55,7 @@ function ChessTile({
     // These two states go hand-in-hand
     const [currentState, setCurrentState] = useState(TILE_STATE.EMPTY);
     const [chessPieceHolding, setChessPieceHolding] = useState(null);
+    // const [pieceSignature, setPieceSignature] = useState(null);
     
     // States that trigger additional functionality/UI
     const [isHoveringTile, setIsHoveringTile] = useState(false);
@@ -80,9 +82,15 @@ function ChessTile({
         setTileColor((x + y) % 2 == 0 ? "#FFF" : "#000");
     }, []);
 
+    // useEffect(() => {
+    //     console.log("Piece holding!", chessPieceHolding);
+    //     setPieceSignature(JSON.stringify(chessPieceHolding));
+    // },[chessPieceHolding])
+
+
     // Resetting tile state if new chessPiece
     useEffect(() => {
-        let isEmpty = currentState === TILE_STATE.EMPTY;
+        const isEmpty = currentState === TILE_STATE.EMPTY;
 
         if (piece === null) {
             setCurrentState(TILE_STATE.EMPTY);
@@ -98,7 +106,7 @@ function ChessTile({
         }
 
         // Check if the piece was captured, will likely need to account for capture logic
-        let pieceIsCaptured = chessPieceHolding.team !== piece.team;
+        const pieceIsCaptured = chessPieceHolding.team !== piece.team;
 
         if (pieceIsCaptured) {
             setChessPieceHolding({ ...piece });
@@ -121,7 +129,7 @@ function ChessTile({
     }
     
     const handleMove = () => {
-        addChessMove({ newX: position.col, newY: position.row });
+        addChessMove({ newX: position.col, newY: position.row, type: currentState === TILE_STATE.HOLDING_PIECE ? 'CAPTURE' : 'MOVE' });
     }
 
     const handleSelection = () => {
@@ -147,7 +155,22 @@ function ChessTile({
         //     )
         // })
     }
-    
+
+    const getTileColor = useCallback(() => {
+        if (validPath) {
+            if (currentState !== TILE_STATE.EMPTY) {
+                return "#d80404";
+            } else {
+                return "#33F";
+            }
+        }
+        
+        if (isSelected || isHoveringTile) {
+            return "#B4D5FF";
+        }
+
+        return tileColor;
+    }, [isSelected, isHoveringTile, validPath, currentState]);
 
     if (position.row === undefined || position.col === undefined) {
         return null;
@@ -328,7 +351,7 @@ function ChessTile({
                     // height: parentContext.tileSize,
                     width: `${DEFAULT_TILE_SIZE}px`,
                     height: `${DEFAULT_TILE_SIZE}px`,
-                    backgroundColor: validPath ? "rgb(255, 0, 0)" : (isSelected || isHoveringTile) ? "#B4D5FF" : tileColor,
+                    backgroundColor: getTileColor() ?? tileColor,
                     transitionDuration: "300ms",
                     transitionProperty: "background-color",
                     transitionTimingFunction: "ease-out",
@@ -341,8 +364,9 @@ function ChessTile({
             >
                 <div ref={dropDiv}>{currentState === TILE_STATE.EMPTY ? null : 
                     <ChessPiece
-                    name={chessPieceHolding.name}
-                    teamType={chessPieceHolding.team}
+                        name={chessPieceHolding.name}
+                        teamType={chessPieceHolding.team}
+                        location={{ x: position.row, y: position.col }}
                     />
                 }</div>
             </div>
