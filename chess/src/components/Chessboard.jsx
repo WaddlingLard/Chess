@@ -5,6 +5,7 @@ import ChessPiece, { applyConditions, getMoveSystem, PIECE_MOVE_SYSTEM, PIECE_TY
 import { GAME_STATUS, useGame } from "../contexts/GameContext";
 import { useSelect } from "../contexts/SelectContext";
 import { useMoves } from "../contexts/MoveContext";
+import { TeamTimer } from "./TeamTimer";
 
 // Importing types
 /**@typedef {import('./ChessPiece').PieceInformation} PieceInformation*/
@@ -73,6 +74,8 @@ export const getEmptyPieceGrid = (height, width) => {
     
 };
 
+const DEFAULT_TIMER_DURATION = 10;
+
 function Chessboard({
     boardWidth,
     boardHeight,
@@ -85,7 +88,7 @@ function Chessboard({
     // const { boardState, setBoardState } = useGame();
     const { chessMoves } = useMoves();
     const { selectedPiece, setSelectedPiece } = useSelect();
-    const { gameStatus, setGameStatus } = useGame();
+    const { gameStatus, setGameStatus, teamTurn, teamOrder } = useGame();
 
     const [dimension, setDimension] = useState({
         width: undefined,
@@ -533,6 +536,8 @@ function Chessboard({
                 setErrorFlag(true);
             }
 
+            
+
             // Update the move count
             pieceTable[pieceTableKey].moveCount += 1;
 
@@ -690,12 +695,14 @@ function Chessboard({
     // Styles rules here
     const styles = {
         chessBoard: {
+            position: 'relative',
             // width: `${tileRenderSize * dimension.width}px`,
             // height: `${tileRenderSize * dimension.height}px`,
             width: `${DEFAULT_TILE_SIZE * dimension.width}px`,
             height: `${DEFAULT_TILE_SIZE * dimension.height}px`,
-            display: "grid",
-            gridTemplateRows: `repeat(${dimension.height}, 1fr)`,
+            // display: 'flex',
+            // display: "grid",
+            // gridTemplateRows: `repeat(${dimension.height}, 1fr)`,
             padding: "1em",
             borderRadius: "24px",
             borderStyle: "solid",
@@ -720,7 +727,35 @@ function Chessboard({
     return (
         <>
             {/* Draw the board */}
-            <div style={{ ...styles.chessBoard }}>{getBoard || <p>Loading the board</p>}</div>
+            <div
+                style={{ display: 'flex', padding: '3rem'}}
+            >
+                <div style={{ ...styles.chessBoard }}>
+                    {getBoard || <p>Loading the board</p>}
+                </div>
+                <div
+                    style={{ width: 'fit-content', display: 'flex', alignItems: 'center', padding: '1rem' }}
+                >
+                    <div
+                        style={{ 
+                            // display: 'flex',
+                            height: 'stretch',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            textAlign: 'center',  
+                            alignContent: 'space-between',
+                            justifyContent: 'space-between'
+                        }}
+                    >                        
+                        {/* <p>{teamTurn}'s Turn</p> */}
+                        {teamOrder.map((teamName) => (
+                            <div style={{ minWidth: '14rem' }}>
+                                <TeamTimer teamType={teamName} seconds={DEFAULT_TIMER_DURATION}/>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
         </>
     );
 }

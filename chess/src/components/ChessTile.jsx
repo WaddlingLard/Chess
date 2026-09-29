@@ -36,6 +36,7 @@ function ChessTile({
 
     const { addChessMove } = useMoves();
     const { selectedPiece, setSelectedPiece } = useSelect();
+    const { teamTurn } = useGame();
     const { chessBoard, setChessBoard } = updateBoard;
     
     // Add more variables for constructorData if needed
@@ -58,6 +59,7 @@ function ChessTile({
     // const [pieceSignature, setPieceSignature] = useState(null);
     
     // States that trigger additional functionality/UI
+    const [canBeSelected, setCanBeSelected] = useState(false);
     const [isHoveringTile, setIsHoveringTile] = useState(false);
     const [isSelected, setIsSelected] = useState(false);
 
@@ -82,18 +84,13 @@ function ChessTile({
         setTileColor((x + y) % 2 == 0 ? "#FFF" : "#000");
     }, []);
 
-    // useEffect(() => {
-    //     console.log("Piece holding!", chessPieceHolding);
-    //     setPieceSignature(JSON.stringify(chessPieceHolding));
-    // },[chessPieceHolding])
-
-
     // Resetting tile state if new chessPiece
     useEffect(() => {
         const isEmpty = currentState === TILE_STATE.EMPTY;
 
         if (piece === null) {
             setCurrentState(TILE_STATE.EMPTY);
+            setCanBeSelected(false);
             setChessPieceHolding(null);
             return;
         }
@@ -119,7 +116,15 @@ function ChessTile({
         if (!tile) return;
         const selectionStatus = tile.selected;
         setIsSelected(selectionStatus);
-    }, [selected])
+    }, [selected]);
+
+    useEffect(() => {
+        // console.log("Team turn changed!");
+        if (currentState !== TILE_STATE.EMPTY) {
+            // console.log(chessPieceHolding.team === teamTurn);
+            setCanBeSelected(chessPieceHolding.team === teamTurn);
+        }
+    }, [teamTurn, currentState]);
 
     const handleTileHover = (isMouseOn) => {
         if (currentState === TILE_STATE.EMPTY) {
@@ -358,8 +363,19 @@ function ChessTile({
                     transitionDelay: "0ms",
                     display: "flex",
                     justifyContent: "center",
-                    pointerEvents: (currentState === TILE_STATE.EMPTY && !validPath) ? "none" : "all",
-                    cursor: (currentState === TILE_STATE.EMPTY && !validPath) ? "auto" : "pointer"
+                    // pointerEvents: (currentState === TILE_STATE.EMPTY && !validPath) || !canBeSelected ? "none" : "all",
+                    // cursor: (currentState === TILE_STATE.EMPTY && !validPath) || !canBeSelected ? "auto" : "pointer"
+
+                    /**
+                     * A tile can be selected when
+                     * 1. There is a piece, and it is of the current team
+                     * 2. A valid path flag is lit up
+                     * 3. There is a piece at is declared as a valid path
+                     */
+
+
+                    pointerEvents: canBeSelected || validPath ? "all" : "none",
+                    cursor: canBeSelected || validPath ? "pointer" : "auto"
                 }}
             >
                 <div ref={dropDiv}>{currentState === TILE_STATE.EMPTY ? null : 

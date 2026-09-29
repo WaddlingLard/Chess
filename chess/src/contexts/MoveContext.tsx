@@ -1,16 +1,21 @@
-import { useState, createContext, useContext, useCallback } from 'react';
+import { useState, createContext, useContext, useRef, useCallback } from 'react';
 import { useSelect, PieceContext } from './SelectContext';
 
 export type ChessMove = PieceContext & { newX: number, newY: number, type: MoveType };
 export type MoveType = "CHECK" | "MOVE" | "CAPTURE";
 
-const MoveContext = createContext<{ chessMoves: { moveList: Array<ChessMove> }, addChessMove: ( newMove: Pick<ChessMove, 'newX' | 'newY' | 'type'>) => void } | null>(null);
+const MoveContext = createContext<{ 
+    chessMoves: { moveList: Array<ChessMove> }, 
+    addChessMove: ( newMove: Pick<ChessMove, 'newX' | 'newY' | 'type'>) => void, 
+    moveCount: React.RefObject<number>,
+} | null>(null);
 
 export function MoveProvider({children}: {children: React.ReactNode}) {
 
     const { selectedPiece, setSelectedPiece } = useSelect();
     const [chessMoves, setChessMoves] = useState<{ moveList: Array<ChessMove> }>({ moveList: [] });
-    
+    const moveCount = useRef<number>(0); 
+
     const addChessMove = useCallback((newMove: Pick<ChessMove, 'newX' | 'newY' | 'type'> ) => {
         if (selectedPiece === null) {
             // Need to add proper error handling for this instance
@@ -18,13 +23,15 @@ export function MoveProvider({children}: {children: React.ReactNode}) {
             return;
         }
         console.log('Added a new chess move: ', { ...selectedPiece, ...newMove });
+        moveCount.current++;
         setChessMoves(({ moveList: [...chessMoves.moveList, { ...selectedPiece, ...newMove}]}));
         setSelectedPiece(null);
     }, [chessMoves, selectedPiece]);
 
     const contextData = {
         chessMoves,
-        addChessMove
+        addChessMove,
+        moveCount
     };
 
     return (

@@ -29,9 +29,9 @@ function ChessApp() {
             </header>
 
             <BoardProvider>
-                <GameProvider>
-                    <SelectProvider>
-                        <MoveProvider>
+                <SelectProvider>
+                    <MoveProvider>
+                        <GameProvider>
                             {!isGameStarted && (
                                 <div style={{ width: "100%", height: "100%" }}>
                                     <SplashScreen
@@ -70,9 +70,9 @@ function ChessApp() {
                                     />
                                 </div>
                             )}
-                        </MoveProvider>
-                    </SelectProvider>
-                </GameProvider>
+                        </GameProvider>
+                    </MoveProvider>
+                </SelectProvider>
             </BoardProvider>
         </>
     );
