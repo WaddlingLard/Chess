@@ -109,8 +109,9 @@ function Chessboard({
     // Store the pieces into the object/hashtable
     // const [pieceTable, setPieceTable] = useState({ table: {} });
 
-    /**@type {React.Ref<Record<string, PieceInformation>} */
-    const pieceTable = useRef({});
+    /**@type {React.Ref<Map<string, PieceInformation>} */
+    // /**@type {React.Ref<Record<string, PieceInformation>} */
+    const pieceTable = useRef(new Map());
 
     /**@type {React.Ref<Array<ChessMove>>} */
     const processedMoves = useRef([]);
@@ -203,8 +204,8 @@ function Chessboard({
         /**@type {Array<Array<TileData>>} */
         const grid = [];
 
-        /**@type {Record<string, PieceInformation>} */
-        const pieceLocations = {};        
+        /**@type {Map<string, PieceInformation>} */
+        const pieceLocations = new Map();        
 
         // Iterate over the dimensions to make a base grid
         for (let rIdx = 0; rIdx < width; rIdx++) {
@@ -216,6 +217,7 @@ function Chessboard({
 
             grid.push([]);
             for (let cIdx = 0; cIdx < height; cIdx++) {
+                /**@type {Partial<TileData>} */
                 const data = { x: cIdx, y: rIdx };
                 if (ignorePieceRow || currentPieceRow[cIdx] == PIECE_TYPE.BLANK) {
                     data.piece = null;
@@ -223,24 +225,26 @@ function Chessboard({
                     const pieceData = { ...currentPieceRow[cIdx], ...{ team: isOtherTeam(rIdx) ? "BLACK" : "WHITE", moveCount: 0 }};
 
                     // Add to the piece location table
-                    pieceLocations[JSON.stringify(data)] = { ...pieceData }; 
+                    pieceLocations.set(JSON.stringify(data), { ...pieceData }); 
                     data.piece = { ...pieceData };
                 }
                 
-                data.tile = { selected: false, validPath: false };
+                data.tile = { selected: false, validPath: false, checked: false };
                 grid[rIdx][cIdx] = data;
             }
         }
 
         // Save the piece locations into the table
-        Object.assign(pieceTable.current, pieceLocations);
+        // Object.assign(pieceTable.current, pieceLocations);
+        // pieceTable.current = pieceLocations;
+        pieceTable.current = new Map([...pieceTable.current, ...pieceLocations]);
         return grid;
     }
 
     /**
      * Generate the valid tiles that the selected tile/piece can click on to move too
      * @param {PieceContext} selectedPiece 
-     * @param {Record<string, PieceInformation>} pieceLocations 
+     * @param {Map<string, PieceInformation>} pieceLocations 
      * @param {TileData[][]} gameBoard 
      * @returns {Point[]}
      */
@@ -290,7 +294,7 @@ function Chessboard({
                     continue;
                 }
                 
-                if (JSON.stringify(newValidMove) in pieceLocations) {
+                if (pieceLocations.has(JSON.stringify(newValidMove))) {
                     // NOTE: This is rather elementary logic, should use a player context to make the decision
                     // const obstructingPiece = pieceLocations[JSON.stringify(newValidMove)];
                     // if (obstructingPiece.team && obstructingPiece.team !== pieceInfo.team && !hasSpecialCapture){
@@ -312,7 +316,7 @@ function Chessboard({
     /**
      * Generate the tiles that are valid for attacking by the selectedPiece
      * @param {PieceContext} selectedPiece 
-     * @param {Record<string, PieceInformation} pieceLocations 
+     * @param {Map<string, PieceInformation} pieceLocations 
      * @returns {Point[]}
      */
     const generateValidCaptures = (selectedPiece, pieceLocations) => {
@@ -334,7 +338,8 @@ function Chessboard({
 
         /**@type {TeamType} */
         const oppositionTeam = team === 'WHITE' ? 'BLACK' : 'WHITE';
-        const pieceLocationKeys = Object.keys(pieceLocations);
+        const pieceLocationIter = pieceLocations.keys();
+        const pieceLocationKeys = [...pieceLocationIter];
         
         // Sort by closest pieces to the selectedPiece
         pieceLocationKeys.sort((aKey, bKey) => {
@@ -399,7 +404,7 @@ function Chessboard({
                 if ((hasSpecialCapture && (captureLimit === 0 || xHops <= captureLimit)) 
                     || !hasSpecialCapture && (moveLimit === 0 || xHops <= moveLimit)) {
                         
-                        if (pieceLocations[locationKey].team === oppositionTeam) {
+                        if (pieceLocations.get(locationKey).team === oppositionTeam) {
                             // Target found!
                             pieceTilesAttacked.push({ x, y });
                         }
@@ -509,7 +514,7 @@ function Chessboard({
      * Mutate the provided gameBoard with the pieces reflecting the provided moves
      * @param {TileData[][]} gameBoard 
      * @param {ChessMove[]} moves 
-     * @param {Record<string, PieceInformation>} pieceTable
+     * @param {Map<string, PieceInformation>} pieceTable
      * @param {React.Ref<ChessMove[]>} processedMoves
      * @returns {TileData[][]}
      */
@@ -526,7 +531,7 @@ function Chessboard({
             // let capturePieceValidated = undefined;
 
             // NOTE: Piece validation is checked for, but might need to account for tile (newX, newY) as well
-            const pieceValidated = pieceTableKey in pieceTable && JSON.stringify(piece) === JSON.stringify(pieceTable[pieceTableKey]);
+            const pieceValidated = pieceTable.has(pieceTableKey) && JSON.stringify(piece) === JSON.stringify(pieceTable.get(pieceTableKey));
             // if (move.type === 'CAPTURE') {
             //     capturePieceValidated = newPieceTableKey in pieceTable && piece.team !== pieceTable[newPieceTableKey].team;
             // }
@@ -536,10 +541,11 @@ function Chessboard({
                 setErrorFlag(true);
             }
 
-            
-
             // Update the move count
-            pieceTable[pieceTableKey].moveCount += 1;
+            // pieceTable[pieceTableKey].moveCount += 1;
+            const updatedPiece = pieceTable.get(pieceTableKey);
+            updatedPiece.moveCount += 1;
+            pieceTable.set(pieceTableKey, updatedPiece);
 
             // Move the piece
             currentBoard[y][x].piece = null; 
@@ -549,11 +555,12 @@ function Chessboard({
             //     currentBoard[newY][newX].piece = null;
             // }
 
-            currentBoard[newY][newX].piece = pieceTable[pieceTableKey];
+            // currentBoard[newY][newX].piece = pieceTable[pieceTableKey];
+            currentBoard[newY][newX].piece = pieceTable.get(pieceTableKey);
 
             // Change the table to reflect the piece location
-            pieceTable[newPieceTableKey] = pieceTable[pieceTableKey];
-            delete pieceTable[pieceTableKey];
+            pieceTable.set(newPieceTableKey, pieceTable.get(pieceTableKey));
+            pieceTable.delete(pieceTableKey);
             enactedMoves.push(move);
         }
 
