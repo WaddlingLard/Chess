@@ -60,6 +60,27 @@ export const applyConditions = (pieceInfo, conditions) => {
 }
 
 /**
+ * Checks if the piece has any special conditions based on its type
+ * @param {PieceInformation} pieceInfo 
+ * @returns {Boolean}
+ */
+export const hasSpecialCaptureConditions = (pieceInfo) => {
+    const moveSystem = PIECE_MOVE_SYSTEM[pieceInfo.name];
+    const { conditions } = moveSystem;
+    return conditions.capture !== undefined || conditions.captureLimit !== undefined;
+}
+
+/**
+ * Get the checkable property of the piece
+ * @param {PieceInformation} pieceInfo 
+ * @returns {Boolean}
+ */
+export const isCheckable = (pieceInfo) => {
+    const moveSystem = PIECE_MOVE_SYSTEM[pieceInfo.name];
+    return moveSystem.checkable;
+}
+
+/**
  * How the system works:
  * Pieces will have a MOVE_SYSTEM that contains the steps, moveLimit, and conditions
  * While most pieces will follow their initial provided data, others will require a check beforehand (*eyes pawn*)
@@ -101,13 +122,14 @@ const VALID_TEAM_TYPES = ["WHITE", "BLACK"];
  * @param {React.Dispatch<SetStateAction<string>>} errorMessageSetter 
  * @returns {MoveSystem}
  */
-export const getMoveSystem = (pieceName, errorSetter, errorMessageSetter) => {
+export const getMoveSystem = (pieceName) => {
 
     if (pieceName in PIECE_MOVE_SYSTEM){
         return { ...PIECE_MOVE_SYSTEM[pieceName]}
     } else {
-        errorSetter(true);
-        errorMessageSetter(`Failed to acquire move system for ${pieceName} chess piece!`); 
+        // No longer using react states as logic has move logic is stripped from chessboard component
+        // errorSetter(true);
+        // errorMessageSetter(`Failed to acquire move system for ${pieceName} chess piece!`); 
         return PIECE_MOVE_SYSTEM.BLANK; // Default to avoid null return
     }
 
@@ -134,9 +156,6 @@ function ChessPiece({
     // useEffect(() => {
     //     console.log("New value of validDropOccurred!", drop.validDropOccurred);
     // }, [drop.validDropOccurred]);
-
-    // console.log("Name: ", name);
-    // console.log("Team type: ", teamType);
 
     // Set the piece type and team affiliation
     useEffect(() => {
