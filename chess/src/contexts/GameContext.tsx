@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useCallback, useState, useMemo, useEffect, useRef, SetStateAction } from 'react';
-import { TeamType } from '../components/ChessPiece';
+import { TeamType, GameStatus } from '../types/types';
 import { useMoves } from './MoveContext';
 
 // The game context is an important context that can be used to keep track of the entire game state
 // Not only should it store the pieces, but it should also store tile information
 const GameContext = createContext<{
-        gameStatus: keyof typeof GAME_STATUS | null,
-        setGameStatus: React.Dispatch<SetStateAction<keyof typeof GAME_STATUS | null>>,
+        gameStatus: GameStatus | null,
+        setGameStatus: React.Dispatch<SetStateAction<GameStatus | null>>,
         teamTurn: TeamType | null,
         teamOrder: TeamType[],
     } | null>
@@ -17,7 +17,7 @@ export function GameProvider({children}: {children: React.ReactNode}) {
     const { moveCount, chessMoves } = useMoves();
 
     const [boardState, setBoardState] = useState(null);
-    const [gameStatus, setGameStatus] = useState<keyof typeof GAME_STATUS | null>(null);
+    const [gameStatus, setGameStatus] = useState<GameStatus | null>(null);
     
     const [teamOrder, setTeamOrder] = useState<TeamType[]>(['WHITE', 'BLACK']);
     const [teamScore, setTeamScore] = useState<Record<TeamType, number>>({ 'WHITE': 0, 'BLACK': 0 });
