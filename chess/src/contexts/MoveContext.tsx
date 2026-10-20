@@ -6,6 +6,7 @@ const MoveContext = createContext<{
     chessMoves: { moveList: Array<ChessMove> }, 
     addChessMove: ( newMove: Pick<ChessMove, 'newX' | 'newY' | 'type'>) => void, 
     moveCount: React.RefObject<number>,
+    // createChessMove: ( newMove: Pick<ChessMove, 'newX' | 'newY' | 'type'>) => ChessMove | undefined
 } | null>(null);
 
 export function MoveProvider({children}: {children: React.ReactNode}) {
@@ -26,10 +27,20 @@ export function MoveProvider({children}: {children: React.ReactNode}) {
         setSelectedPiece(null);
     }, [chessMoves, selectedPiece]);
 
+    // const createChessMove = useCallback((newMove: Pick<ChessMove, 'newX' | 'newY' | 'type'>) => {
+    //     if (selectedPiece === null) {
+    //         // Need to add proper error handling for this instance
+    //         console.error("Cannot add chess move with no selection!");
+    //         return;
+    //     }
+    //     return { ...selectedPiece, ...newMove };
+    // }, [selectedPiece]);
+
     const contextData = {
         chessMoves,
         addChessMove,
-        moveCount
+        moveCount,
+        // createChessMove,
     };
 
     return (
