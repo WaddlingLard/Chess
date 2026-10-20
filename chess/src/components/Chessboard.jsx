@@ -8,18 +8,18 @@ import { useMoves } from "../contexts/MoveContext";
 import { TeamTimer } from "./TeamTimer";
 
 // Importing types
-/**@typedef {import('./ChessPiece').PieceInformation} PieceInformation*/
-/**@typedef {import('./ChessPiece').MoveSystem} MoveSystem */
-/**@typedef {import('./ChessTile').TileConditionData} TileConditionData */
-/**@typedef {import('../contexts/SelectContext').PieceContext} PieceContext */
-/**@typedef {import('../contexts/MoveContext').ChessMove} ChessMove */
+/**@typedef {import('../types/types').PieceInformation} PieceInformation*/
+/**@typedef {import('../types/types').MoveSystem} MoveSystem */
+/**@typedef {import('../types/types').TileConditionData} TileConditionData */
+/**@typedef {import('../types/types').PieceContext} PieceContext */
+/**@typedef {import('../types/types').ChessMove} ChessMove */
 /**@typedef {import('../types/types').Point} Point */
-/**@typedef {import('./ChessPiece').TeamType} TeamType */
+/**@typedef {import('../types/types').TeamType} TeamType */
+/**@typedef {import('../types/types').ChessPieceType} ChessPieceType */
+/**@typedef {import('../types/types').ControlMapNames} ControlMapNames */
 // export const TileContext = createContext(undefined);
 
-/**
- * @typedef {Point & { piece: PieceInformation, tile: TileConditionData}} TileData
- */
+/**@typedef {import('../types/types').TileData} TileData*/
 
 export const DEFAULT_BOARD_DIMENSION = 8;
 export const DEFAULT_TILE_SIZE = 60
@@ -94,10 +94,6 @@ function Chessboard({
         width: undefined,
         height: undefined
     });
-
-    /**
-     * @typedef {Point & { piece: PieceInformation?, tile: TileConditionData}} TileData
-     */
     
     // Make sure to wrap items in () if you need to cast to the type
     const [chessBoard, setChessBoard] = useState(/**@type {{ board: TileData[][] }}*/({ board: [] }));   

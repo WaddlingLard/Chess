@@ -6,24 +6,12 @@ import { useGame } from "../contexts/GameContext";
 import { useSelect } from "../contexts/SelectContext";
 import { useMoves } from "../contexts/MoveContext";
 
-/**@typedef {import('../contexts/MoveContext').MoveType} MoveType */
-/**@typedef {import('./Chessboard').TileData} TileData*/
-/**@typedef {{ selected: boolean, validPath: boolean }} TileConditionData */
+/**@typedef {import('../types/types').TileConditionData} TileConditionData */
+/**@typedef {import('../types/types').MoveType} MoveType */
+/**@typedef {import('../types/types').TileData} TileData*/
+/**@typedef {import('../types/types').TileState} TileState*/
 
-const TILE_STATE = Object.freeze({
-    EMPTY: "EMPTY",
-    HOLDING_PIECE: "HOLDING_PIECE",
-    IN_CHECK: "IN_CHECK",
-    TAKEN: "TAKEN"
-});
 
-/**
- * 
- * @param {{ constructorData: TileData, updateBoard: {
- * chessBoard: TileData[][], 
- * setChessBoard: React.Dispatch<SetStateAction<TileData[][]>> }} props 
- * @returns ___________
- */
 function ChessTile({
     constructorData,
     updateBoard,

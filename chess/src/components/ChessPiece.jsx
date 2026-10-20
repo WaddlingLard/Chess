@@ -14,34 +14,13 @@ import {
 import PieceSelector from "./PieceSelector";
 import { STEP_FUNCTIONS } from "../types/piece_moves";
 
-/**@typedef {Array<Array<Array<number>>} StepList*/
+/**@typedef {import("../types/types").ChessPieceType} ChessPieceType */
+/**@typedef {import("../types/types").PieceInformation} PieceInformation */
+/**@typedef {import("../types/types").StepList} StepList */
+/**@typedef {import("../types/types").MoveSystem} MoveSystem */
 
 /**
- * @typedef {Object} MoveSystem
- * @property {StepList} steps
- * @property {number} moveLimit
- * @property {StepList} [capture]
- * @property {number} [captureLimit]
- * @property {Record<string, Function>} conditions
- * @property {boolean} checkable
- */
-
-/**
- * @typedef {{ 
- * name: ChessPieceType, 
- * icon: any, 
- * team?: TeamType 
- * moveCount?: number
- * }} PieceInformation
- */
-
-/**
- * @typedef {"WHITE" | "BLACK"} TeamType
- */
-
-/**
- * @typedef {"PAWN" | "KNIGHT" | "BISHOP" | "ROOK" | "QUEEN" | "KING" | "BLANK"} ChessPieceType
- * @type {Record<ChessPieceType, Omit<PieceInformation, 'moveCount' | 'team'>>}
+ * @type {Record<ChessPieceType, Pick<PieceInformation, 'name' | 'icon'>>}
  */
 // prettier-ignore
 export const PIECE_TYPE = Object.freeze({

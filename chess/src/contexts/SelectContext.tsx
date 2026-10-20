@@ -1,8 +1,6 @@
 import React, { useState, createContext, useContext, SetStateAction, useEffect } from 'react';
 import { PieceInformation } from '../components/ChessPiece';
-import { Point } from '../types/types';
-
-export type PieceContext = Point & { piece: PieceInformation };
+import { PieceContext } from '../types/types';
 
 const SelectContext = createContext<{ 
     selectedPiece: PieceContext | null, 

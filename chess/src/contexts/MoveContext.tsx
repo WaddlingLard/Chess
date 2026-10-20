@@ -1,8 +1,6 @@
 import { useState, createContext, useContext, useRef, useCallback } from 'react';
-import { useSelect, PieceContext } from './SelectContext';
-
-export type ChessMove = PieceContext & { newX: number, newY: number, type: MoveType };
-export type MoveType = "CHECK" | "MOVE" | "CAPTURE";
+import { useSelect } from './SelectContext';
+import { ChessMove, MoveType } from '../types/types';
 
 const MoveContext = createContext<{ 
     chessMoves: { moveList: Array<ChessMove> }, 

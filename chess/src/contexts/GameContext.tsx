@@ -2,12 +2,6 @@ import React, { createContext, useContext, useCallback, useState, useMemo, useEf
 import { TeamType } from '../components/ChessPiece';
 import { useMoves } from './MoveContext';
 
-export const GAME_STATUS = Object.freeze({
-    WAITING: "WAITING",
-    IN_PROGRESS: "IN_PROGRESS",
-    COMPLETED: "COMPLETED"
-});
-
 // The game context is an important context that can be used to keep track of the entire game state
 // Not only should it store the pieces, but it should also store tile information
 const GameContext = createContext<{
