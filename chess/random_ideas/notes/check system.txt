@@ -1,0 +1,56 @@
+Tiles of Control are tiles that house enemy pieces or are empty
+We can use this to check whether a piece is in check or not
+
+When a piece moves
+It affects the tiles of control
+The tile the piece has moved to and the tile that is now unoccupied (*)
+
+CONSIDER: Should tiles that contain friendly pieces also be accounted for in the tiles of control? Yes, they should be in the tiles of capture
+
+ALSO: WHAT IS THE UTILITY OF HAVING THE PIECE ID => TILES THAT ARE INFLUENCED BY CONTROL TYPE (MVM/CPT)
+ANSWER: IT IS USED FOR REFERENCE TO DELETE THE OLD DATA STORED AS TILE OF CONTROL => PIECES INFLUENCING THAT TILE
+
+Process left to write:
+1. Aggregate the pieces by id
+2. Then filter pieceTable with the id aggregation set
+3. delete existing pieces in the tiles of control maps using the influence maps
+4. run calculateTileInfluence with the truncated filtered pieceTable. somehow combine the two maps together
+
+
+Tiles of control could be split into two variants
+Tiles of movement: Can only control empty tiles
+Tiles of capture: Can control empty and enemy piece tiles
+We can use tiles of movement to precalculate pieces that are capable of blocking checks
+And we can use tiles of capture to precalculate pieces taht are capable of capturing pieces initiating check
+
+(*) The tiles that are affected will only require the pieces that carried influence (movement/capture) on those affected tiles will need to recalculate their influence
+
+
+Tiles of capture are the ones that initiate check if the checkable piece is in a tile of capture
+Multiple pieces can initiate check
+CASE: If there are more than 1 piece checking the checkable piece. The piece HAS to move. BLOCKING or CAPTURING is not possible. Safe tiles are where the opposing tiles of capture do not encompass the tile
+
+Data Structure Definition:
+for both control and move:
+Map<Tile (stringified position), Set<PieceInformation>>
+
+Unique piece identity for PieceInformation:
+create factory function with id grabbing system
+
+a piece might have special capture conditions
+to get Tiles of Movement:
+generateValidMoves using the ordinary move system
+
+to get Tiles of Capture: 
+generateValidCaptures using the capture system (might be ordinary move system)
+union with generateValidMoves using 
+
+WHEN A PIECE IS CHECKED:
+When a piece is checked the following happens:
+- The tile containing the piece is marked as checked
+- 
+
+
+
+
+
