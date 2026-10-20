@@ -1,4 +1,6 @@
-export const STEP_FUNCTIONS = Object.freeze({
+import { StepList, StepFunctionType } from "./types";
+
+export const STEP_FUNCTIONS: Record<StepFunctionType, StepList> = Object.freeze({
     FORWARD: [[[1],[0]]],
     DIAGONAL: [[[-1], [-1]], [[-1], [1]], [[1], [1]], [[1], [-1]]],
     INTERSECTION: [[[-1], [0]], [[1], [0]], [[0], [-1]], [[0], [1]]],
