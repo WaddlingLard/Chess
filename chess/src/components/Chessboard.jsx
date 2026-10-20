@@ -6,6 +6,7 @@ import { GAME_STATUS, useGame } from "../contexts/GameContext";
 import { useSelect } from "../contexts/SelectContext";
 import { useMoves } from "../contexts/MoveContext";
 import { TeamTimer } from "./TeamTimer";
+import { getNewChessBoard } from "../utils/boardCreationLogic";
 
 // Importing types
 /**@typedef {import('../types/types').PieceInformation} PieceInformation*/
@@ -130,7 +131,7 @@ function Chessboard({
         // Use default value instead if failed to pass params
         const useDefaultDimension = boardWidth === undefined || boardHeight === undefined;
         const useDefaultPieceLayout = chessPieceLayout === undefined;
-        
+
         setPieceLayout((prev) => ({
             grid: useDefaultPieceLayout ? DEFAULT_PIECE_LAYOUT : chessPieceLayout,
         }));
@@ -156,10 +157,16 @@ function Chessboard({
         }
 
         const { grid } = pieceLayout;
-        const newGameGrid = buildGameGrid(grid, dimension.width, dimension.height);
+        const newGameGrid = getNewChessBoard(
+            grid, 
+            dimension.width, 
+            dimension.height, 
+            pieceTable.current,
+            [createChessPiece, getChessBoardControlMaps]
+        );
 
         // Does the game grid match with the piece layout dimension?
-        if (newGameGrid.length / 2 !== grid.length) {
+        if (newGameGrid.grid.length / 2 !== grid.length) {
             setErrorMessage(
                 `Provided piece layout does not match up with the dimensions of the chess board ${
                     newGameGrid.length / 2
@@ -168,8 +175,8 @@ function Chessboard({
             setErrorFlag(true);
         }
 
-        setChessBoard({ board: newGameGrid });
-
+        setChessBoard({ board: newGameGrid.grid });
+        // setGameStatus('IN_PROGRESS');
         // setGameGridCreated(true);
     }, [dimension]);
 
@@ -185,239 +192,7 @@ function Chessboard({
     // }, [gameStarted]);
 
     /**
-     * Builds a grid and adds the piece/tile information
-     * @param {Pick<PieceInformation, "name" | "icon">} chessPieceGrid
-     * @param {number} width 
-     * @param {number} height 
-     * @returns {Array<Array<TileData>>}
-     */
-    const buildGameGrid = (chessPieceGrid, width, height) => {
-    
-        const isOtherTeam = (currentRow) => {
-            return currentRow >= height / 2;
-        };
-
-        /**@type {Array<Array<TileData>>} */
-        const grid = [];
-
-        /**@type {Map<string, PieceInformation>} */
-        const pieceLocations = new Map();        
-
-        // Iterate over the dimensions to make a base grid
-        for (let rIdx = 0; rIdx < width; rIdx++) {
-
-            const currentPieceRow = chessPieceGrid[isOtherTeam(rIdx) 
-                ? rIdx % chessPieceGrid.length 
-                : chessPieceGrid.length - 1 - (rIdx % chessPieceGrid.length)];
-            const ignorePieceRow = !currentPieceRow.length
-
-            grid.push([]);
-            for (let cIdx = 0; cIdx < height; cIdx++) {
-                /**@type {Partial<TileData>} */
-                const data = { x: cIdx, y: rIdx };
-                if (ignorePieceRow || currentPieceRow[cIdx] == PIECE_TYPE.BLANK) {
-                    data.piece = null;
-                } else {
-                    const pieceData = { ...currentPieceRow[cIdx], ...{ team: isOtherTeam(rIdx) ? "BLACK" : "WHITE", moveCount: 0 }};
-
-                    // Add to the piece location table
-                    pieceLocations.set(JSON.stringify(data), { ...pieceData }); 
-                    data.piece = { ...pieceData };
-                }
-                
-                data.tile = { selected: false, validPath: false, checked: false };
-                grid[rIdx][cIdx] = data;
-            }
-        }
-
-        // Save the piece locations into the table
-        // Object.assign(pieceTable.current, pieceLocations);
-        // pieceTable.current = pieceLocations;
-        pieceTable.current = new Map([...pieceTable.current, ...pieceLocations]);
-        return grid;
-    }
-
-    /**
-     * Generate the valid tiles that the selected tile/piece can click on to move too
-     * @param {PieceContext} selectedPiece 
-     * @param {Map<string, PieceInformation>} pieceLocations 
-     * @param {TileData[][]} gameBoard 
-     * @returns {Point[]}
-     */
-    const generateValidMoves = (selectedPiece, pieceLocations, gameBoard) => {
-        
-        /**@type {Point[]} */
-        const validMovePath = [];
-        // Get the piece that belongs to the selectedTile
-        /**@type {PieceInformation & {moveSystem: MoveSystem | undefined}} */
-        const pieceInfo = {
-            ...selectedPiece.piece,
-            moveSystem: { ...getMoveSystem(selectedPiece.piece.name, setErrorFlag, setErrorMessage) }
-        };
-
-        const { conditions } = pieceInfo.moveSystem;
-        if (conditions) {
-            applyConditions(pieceInfo, conditions);
-        }
-
-        // Grab after the conditions are applied
-        const { steps, moveLimit } = pieceInfo.moveSystem;
-        // const hasSpecialCapture = capture !== undefined;
-
-        let moveSteps = [...steps];
-        const [currY, currX] = [selectedPiece.y, selectedPiece.x]; 
-        for (let i = 0; i !== (moveLimit === 0 ? -1 : moveLimit) ; i++) {
-            
-            if (moveSteps.length === 0) {
-                break; 
-            }
-
-            for (const step of moveSteps) {
-                /**@type {[number[], number[]]} */
-                const [ySteps, xSteps] = step;
-                const yDiff = ySteps.reduce((subtotal, currVal) => { return subtotal + currVal }) * (i + 1);
-                const xDiff = xSteps.reduce((subtotal, currVal) => { return subtotal + currVal }) * (i + 1);
-                /**@type {Point} */
-                const newValidMove = { x: xDiff + currX, y: yDiff + currY };
-
-                if (newValidMove.x >= gameBoard[0].length 
-                    || newValidMove.x < 0
-                    || newValidMove.y >= gameBoard.length
-                    || newValidMove.y < 0
-                ) {
-                    // Out of bounds
-                    moveSteps = moveSteps.filter((step, idx) => { return step[0] != ySteps && step[1] != xSteps });
-                    continue;
-                }
-                
-                if (pieceLocations.has(JSON.stringify(newValidMove))) {
-                    // NOTE: This is rather elementary logic, should use a player context to make the decision
-                    // const obstructingPiece = pieceLocations[JSON.stringify(newValidMove)];
-                    // if (obstructingPiece.team && obstructingPiece.team !== pieceInfo.team && !hasSpecialCapture){
-                    //     // Captureable piece
-                    //     validMovePath.push(newValidMove);
-                    // }
-
-                    moveSteps = moveSteps.filter((step, idx) => { return step[0] != ySteps && step[1] != xSteps });
-                } else {
-                    // Valid move
-                    validMovePath.push(newValidMove);
-                } 
-            }
-        }
-
-        return validMovePath;
-    }
-
-    /**
-     * Generate the tiles that are valid for attacking by the selectedPiece
-     * @param {PieceContext} selectedPiece 
-     * @param {Map<string, PieceInformation} pieceLocations 
-     * @returns {Point[]}
-     */
-    const generateValidCaptures = (selectedPiece, pieceLocations) => {
-
-        /**@type {Point[]} */
-        const pieceTilesAttacked = [];
-
-        /**@type {PieceInformation & {moveSystem: MoveSystem}} */
-        const pieceInfo = { 
-            ...selectedPiece.piece, 
-            moveSystem: { ...getMoveSystem(selectedPiece.piece.name, setErrorFlag, setErrorMessage) } 
-        };
-
-        const { team } = pieceInfo;
-        const { conditions } = pieceInfo.moveSystem;
-        if (conditions) {
-            applyConditions(pieceInfo, conditions);
-        }
-
-        /**@type {TeamType} */
-        const oppositionTeam = team === 'WHITE' ? 'BLACK' : 'WHITE';
-        const pieceLocationIter = pieceLocations.keys();
-        const pieceLocationKeys = [...pieceLocationIter];
-        
-        // Sort by closest pieces to the selectedPiece
-        pieceLocationKeys.sort((aKey, bKey) => {
-            const keyValues = [JSON.parse(aKey), JSON.parse(bKey)];
-            const [aNode, bNode] = keyValues;
-            const aDistance = Math.abs(aNode.x - selectedPiece.x) + Math.abs(aNode.y - selectedPiece.y);
-            const bDistance = Math.abs(bNode.x - selectedPiece.x) + Math.abs(bNode.y - selectedPiece.y);
-            return aDistance - bDistance;
-        });
-
-        // Does the piece have special capture conditions?
-        const { capture, captureLimit, steps, moveLimit } = pieceInfo.moveSystem
-        const hasSpecialCapture = capture !== undefined;
-        let validCaptureMoves = [...(hasSpecialCapture ? capture : steps)];
-        
-        const [xCurr, yCurr] = [selectedPiece.x, selectedPiece.y];
-        for (const locationKey of pieceLocationKeys) {
-            const { x, y } = JSON.parse(locationKey);
-            const [xDelta, yDelta] = [x - xCurr, y - yCurr]
-
-            if (validCaptureMoves.length == 0) {
-                break;
-            }
-
-            for (const step of validCaptureMoves) {
-                /**@type {[number[], number[]]} */
-                const [ySteps, xSteps] = step;
-                const yDiff = ySteps.reduce((subtotal, currVal) => { return subtotal + currVal });
-                const xDiff = xSteps.reduce((subtotal, currVal) => { return subtotal + currVal });
-
-                // Position is even achievable to reach with provided steps
-                const ignoreX = !xDiff && xCurr === x;
-                const ignoreY = !yDiff && yCurr === y;
-                let xHops, yHops;
-
-                if ((!xDiff && !ignoreX) || (!yDiff && !ignoreY)) {
-                    continue;
-                } 
-
-                xHops = ignoreX ? undefined: xDelta / xDiff;
-                yHops = ignoreY ? undefined: yDelta / yDiff;
-                
-                // This will make the verification process much simpler
-                if (ignoreX) {
-                    xHops = yHops;
-                } else if (ignoreY) {
-                    yHops = xHops;
-                }
-
-                // We need to
-                // 1. Check they are equal, if undefined ignore this step
-                if (xHops !== yHops) {
-                    continue;
-                }
-
-                // 2. Check they are whole and positive, by only checking one
-                if (xHops < 1 || xHops !== Math.floor(xHops)) {
-                    continue;
-                }
-                
-                // 3. Check they are under the limit
-                if ((hasSpecialCapture && (captureLimit === 0 || xHops <= captureLimit)) 
-                    || !hasSpecialCapture && (moveLimit === 0 || xHops <= moveLimit)) {
-                        
-                        if (pieceLocations.get(locationKey).team === oppositionTeam) {
-                            // Target found!
-                            pieceTilesAttacked.push({ x, y });
-                        }
-                        // Remove the move path, a piece has been found in that path!
-                        validCaptureMoves = validCaptureMoves.filter((stepTuple) => stepTuple[0] !== ySteps && stepTuple[1] !== xSteps);
-                    }
-            }
-
-        }
-        
-        
-        return pieceTilesAttacked;
-
-    }
-
-    /**
-     * Clears the gameBoard of any selection set true
+     * Clears the gameBoard of any tile condition property set true
      * @param {TileData[][]} gameBoard
      * @return {TileData[][]} 
      */
@@ -505,71 +280,6 @@ function Chessboard({
         return newMoves;
 
     }
-
-    /**
-     * Mutate the provided gameBoard with the pieces reflecting the provided moves
-     * @param {TileData[][]} gameBoard 
-     * @param {ChessMove[]} moves 
-     * @param {Map<string, PieceInformation>} pieceTable
-     * @param {React.Ref<ChessMove[]>} processedMoves
-     * @returns {TileData[][]}
-     */
-    const enactMoves = (gameBoard, moves, pieceTable, processedMoves) => {
-        const currentBoard = [...gameBoard];
-
-        /**@type {ChessMove[]} */
-        const enactedMoves = [];
-
-        for (const move of moves) {
-            const { x, y, newX, newY, piece } = /**@type {ChessMove} */(move);
-            const pieceTableKey = JSON.stringify({x, y});
-            const newPieceTableKey = JSON.stringify({ x: newX, y: newY });
-            // let capturePieceValidated = undefined;
-
-            // NOTE: Piece validation is checked for, but might need to account for tile (newX, newY) as well
-            const pieceValidated = pieceTable.has(pieceTableKey) && JSON.stringify(piece) === JSON.stringify(pieceTable.get(pieceTableKey));
-            // if (move.type === 'CAPTURE') {
-            //     capturePieceValidated = newPieceTableKey in pieceTable && piece.team !== pieceTable[newPieceTableKey].team;
-            // }
-            // if (!pieceValidated || capturePieceValidated !== undefined && !capturePieceValidated) {
-            if (!pieceValidated) {
-                setErrorMessage("Piece failed validation at move where it was requested!");
-                setErrorFlag(true);
-            }
-
-            // Update the move count
-            // pieceTable[pieceTableKey].moveCount += 1;
-            const updatedPiece = pieceTable.get(pieceTableKey);
-            updatedPiece.moveCount += 1;
-            pieceTable.set(pieceTableKey, updatedPiece);
-
-            // Move the piece
-            currentBoard[y][x].piece = null; 
-            
-            // if (move.type === 'CAPTURE') {
-            //     // Delete the residing piece first
-            //     currentBoard[newY][newX].piece = null;
-            // }
-
-            // currentBoard[newY][newX].piece = pieceTable[pieceTableKey];
-            currentBoard[newY][newX].piece = pieceTable.get(pieceTableKey);
-
-            // Change the table to reflect the piece location
-            pieceTable.set(newPieceTableKey, pieceTable.get(pieceTableKey));
-            pieceTable.delete(pieceTableKey);
-            enactedMoves.push(move);
-        }
-
-        processedMoves.current = processedMoves.current.concat(enactedMoves);
-
-        return currentBoard;
-    }
-
-    /**
-     * @typedef {Object} BoardReturn
-     * @property {Element | null} component
-     * @property {Array<Array<Object>> | null} value
-     */
 
     /**
      * Get the component the properly reflects the board state
