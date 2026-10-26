@@ -14,33 +14,13 @@ import {
 import PieceSelector from "./PieceSelector";
 import { STEP_FUNCTIONS } from "../types/piece_moves";
 
-/**@typedef {Array<Array<Array<number>>} StepList*/
+/**@typedef {import("../types/types").ChessPieceType} ChessPieceType */
+/**@typedef {import("../types/types").PieceInformation} PieceInformation */
+/**@typedef {import("../types/types").StepList} StepList */
+/**@typedef {import("../types/types").MoveSystem} MoveSystem */
 
 /**
- * @typedef {Object} MoveSystem
- * @property {StepList} steps
- * @property {number} moveLimit
- * @property {StepList} [capture]
- * @property {number} [captureLimit]
- * @property {Record<string, Function>} conditions
- */
-
-/**
- * @typedef {{ 
- * name: ChessPieceType, 
- * icon: any, 
- * team?: TeamType 
- * moveCount?: number
- * }} PieceInformation
- */
-
-/**
- * @typedef {"WHITE" | "BLACK"} TeamType
- */
-
-/**
- * @typedef {"PAWN" | "KNIGHT" | "BISHOP" | "ROOK" | "QUEEN" | "KING" | "BLANK"} ChessPieceType
- * @type {Record<ChessPieceType, Omit<PieceInformation, 'moveCount' | 'team'>>}
+ * @type {Record<ChessPieceType, Pick<PieceInformation, 'name' | 'icon'>>}
  */
 // prettier-ignore
 export const PIECE_TYPE = Object.freeze({
@@ -80,6 +60,27 @@ export const applyConditions = (pieceInfo, conditions) => {
 }
 
 /**
+ * Checks if the piece has any special conditions based on its type
+ * @param {PieceInformation} pieceInfo 
+ * @returns {Boolean}
+ */
+export const hasSpecialCaptureConditions = (pieceInfo) => {
+    const moveSystem = PIECE_MOVE_SYSTEM[pieceInfo.name];
+    const { conditions } = moveSystem;
+    return conditions.capture !== undefined || conditions.captureLimit !== undefined;
+}
+
+/**
+ * Get the checkable property of the piece
+ * @param {PieceInformation} pieceInfo 
+ * @returns {Boolean}
+ */
+export const isCheckable = (pieceInfo) => {
+    const moveSystem = PIECE_MOVE_SYSTEM[pieceInfo.name];
+    return moveSystem.checkable;
+}
+
+/**
  * How the system works:
  * Pieces will have a MOVE_SYSTEM that contains the steps, moveLimit, and conditions
  * While most pieces will follow their initial provided data, others will require a check beforehand (*eyes pawn*)
@@ -90,25 +91,26 @@ export const applyConditions = (pieceInfo, conditions) => {
 /**@type {Record<ChessPieceType, MoveSystem} */
 export const PIECE_MOVE_SYSTEM = Object.freeze({
     PAWN:   { steps: [...STEP_FUNCTIONS.FORWARD],                                  moveLimit: 1, 
-        conditions: { 
-            steps() { return PIECE_MOVE_SYSTEM.PAWN.steps.map((stepTuple) => invertMovesUponTeamType(stepTuple, this.team, "WHITE"))}, 
-            moveLimit() { return (this.moveCount ?? -1) == 0 ? 2 : 1; },
-            capture() { return STEP_FUNCTIONS.LEFT_AND_RIGHT.map((stepTuple) => invertMovesUponTeamType(stepTuple, this.team, "WHITE"))},
-            captureLimit() { return 1; }
-        } 
-    },
+                conditions: { 
+                    steps() { return PIECE_MOVE_SYSTEM.PAWN.steps.map((stepTuple) => invertMovesUponTeamType(stepTuple, this.team, "WHITE"))}, 
+                    moveLimit() { return (this.moveCount ?? -1) == 0 ? 2 : 1; },
+                    capture() { return STEP_FUNCTIONS.LEFT_AND_RIGHT.map((stepTuple) => invertMovesUponTeamType(stepTuple, this.team, "WHITE"))},
+                    captureLimit() { return 1; }
+                }, 
+                checkable: false },
     // PAWN:   { steps: [...STEP_FUNCTIONS.FORWARD],                                  moveLimit: 1, 
     //     conditions: { 
     //     steps: PIECE_MOVE_SYSTEM.PAWN.steps.map((stepTuple) => invertMovesUponTeamType(stepTuple, this.team, "WHITE")), 
     //     moveLimit: (this.moveCount ?? -1) == 0 ? 2 : 1,
     //     capture: STEP_FUNCTIONS.LEFT_AND_RIGHT.map((stepTuple) => invertMovesUponTeamType(stepTuple, this.team, "WHITE")) 
     // },
-    KNIGHT: { steps: [...STEP_FUNCTIONS.HORSE],                                    moveLimit: 1, conditions: {} },
-    BISHOP: { steps: [...STEP_FUNCTIONS.DIAGONAL],                                 moveLimit: 0, conditions: {} },
-    ROOK:   { steps: [...STEP_FUNCTIONS.INTERSECTION],                             moveLimit: 0, conditions: {} },
-    QUEEN:  { steps: [...STEP_FUNCTIONS.DIAGONAL, ...STEP_FUNCTIONS.INTERSECTION], moveLimit: 0, conditions: {} },
-    KING:   { steps: [...STEP_FUNCTIONS.DIAGONAL, ...STEP_FUNCTIONS.INTERSECTION], moveLimit: 1, conditions: {} },
-    BLANK:  { steps: [], moveLimit: 0, conditions: {} },
+    KNIGHT: { steps: [...STEP_FUNCTIONS.HORSE],                                    moveLimit: 1, conditions: {}, checkable: false },
+    BISHOP: { steps: [...STEP_FUNCTIONS.DIAGONAL],                                 moveLimit: 0, conditions: {}, checkable: false },
+    ROOK:   { steps: [...STEP_FUNCTIONS.INTERSECTION],                             moveLimit: 0, conditions: {}, checkable: false },
+    QUEEN:  { steps: [...STEP_FUNCTIONS.DIAGONAL, ...STEP_FUNCTIONS.INTERSECTION], moveLimit: 0, conditions: {}, checkable: false },
+    KING:   { steps: [...STEP_FUNCTIONS.DIAGONAL, ...STEP_FUNCTIONS.INTERSECTION], moveLimit: 1, conditions: {}, checkable: true },
+    // BLANK:  { steps: [], moveLimit: 0, conditions: {} },
+    BLANK:  {},
 });
 
 const VALID_TEAM_TYPES = ["WHITE", "BLACK"];
@@ -120,13 +122,14 @@ const VALID_TEAM_TYPES = ["WHITE", "BLACK"];
  * @param {React.Dispatch<SetStateAction<string>>} errorMessageSetter 
  * @returns {MoveSystem}
  */
-export const getMoveSystem = (pieceName, errorSetter, errorMessageSetter) => {
+export const getMoveSystem = (pieceName) => {
 
     if (pieceName in PIECE_MOVE_SYSTEM){
         return { ...PIECE_MOVE_SYSTEM[pieceName]}
     } else {
-        errorSetter(true);
-        errorMessageSetter(`Failed to acquire move system for ${pieceName} chess piece!`); 
+        // No longer using react states as logic has move logic is stripped from chessboard component
+        // errorSetter(true);
+        // errorMessageSetter(`Failed to acquire move system for ${pieceName} chess piece!`); 
         return PIECE_MOVE_SYSTEM.BLANK; // Default to avoid null return
     }
 
@@ -153,9 +156,6 @@ function ChessPiece({
     // useEffect(() => {
     //     console.log("New value of validDropOccurred!", drop.validDropOccurred);
     // }, [drop.validDropOccurred]);
-
-    // console.log("Name: ", name);
-    // console.log("Team type: ", teamType);
 
     // Set the piece type and team affiliation
     useEffect(() => {

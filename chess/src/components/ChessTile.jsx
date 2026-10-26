@@ -6,24 +6,12 @@ import { useGame } from "../contexts/GameContext";
 import { useSelect } from "../contexts/SelectContext";
 import { useMoves } from "../contexts/MoveContext";
 
-/**@typedef {import('../contexts/MoveContext').MoveType} MoveType */
-/**@typedef {import('./Chessboard').TileData} TileData*/
-/**@typedef {{ selected: boolean, validPath: boolean }} TileConditionData */
+/**@typedef {import('../types/types').TileConditionData} TileConditionData */
+/**@typedef {import('../types/types').MoveType} MoveType */
+/**@typedef {import('../types/types').TileData} TileData*/
+/**@typedef {import('../types/types').TileState} TileState*/
 
-const TILE_STATE = Object.freeze({
-    EMPTY: "EMPTY",
-    HOLDING_PIECE: "HOLDING_PIECE",
-    IN_CHECK: "IN_CHECK",
-    TAKEN: "TAKEN"
-});
 
-/**
- * 
- * @param {{ constructorData: TileData, updateBoard: {
- * chessBoard: TileData[][], 
- * setChessBoard: React.Dispatch<SetStateAction<TileData[][]>> }} props 
- * @returns ___________
- */
 function ChessTile({
     constructorData,
     updateBoard,
@@ -34,6 +22,9 @@ function ChessTile({
 
     // const { boardState, setBoardState } = useGame();
 
+    // NOTE: FOR DEBUG PURPOSES
+    const overrideBypass = false;
+
     const { addChessMove } = useMoves();
     const { selectedPiece, setSelectedPiece } = useSelect();
     const { teamTurn } = useGame();
@@ -43,7 +34,7 @@ function ChessTile({
     const { x, y, piece, tile } = constructorData; 
 
     /**@type {TileConditionData} */
-    const { selected, validPath } = tile;
+    const { selected, validPath, checked } = tile;
 
     // const parentContext = useContext(TileContext);
 
@@ -54,7 +45,7 @@ function ChessTile({
     });
     
     // These two states go hand-in-hand
-    const [currentState, setCurrentState] = useState(TILE_STATE.EMPTY);
+    const [currentState, setCurrentState] = useState(/**@type {TileState} */('EMPTY'));
     const [chessPieceHolding, setChessPieceHolding] = useState(null);
     // const [pieceSignature, setPieceSignature] = useState(null);
     
@@ -86,10 +77,10 @@ function ChessTile({
 
     // Resetting tile state if new chessPiece
     useEffect(() => {
-        const isEmpty = currentState === TILE_STATE.EMPTY;
+        const isEmpty = currentState === 'EMPTY';
 
         if (piece === null) {
-            setCurrentState(TILE_STATE.EMPTY);
+            setCurrentState('EMPTY');
             setCanBeSelected(false);
             setChessPieceHolding(null);
             return;
@@ -97,7 +88,7 @@ function ChessTile({
 
         if (isEmpty) {
             // New piece on the tile
-            setCurrentState(TILE_STATE.HOLDING_PIECE);
+            setCurrentState('HOLDING_PIECE');
             setChessPieceHolding({ ...piece });
             return;
         }
@@ -120,21 +111,21 @@ function ChessTile({
 
     useEffect(() => {
         // console.log("Team turn changed!");
-        if (currentState !== TILE_STATE.EMPTY) {
+        if (currentState !== 'EMPTY') {
             // console.log(chessPieceHolding.team === teamTurn);
-            setCanBeSelected(chessPieceHolding.team === teamTurn);
+            setCanBeSelected(chessPieceHolding.team === teamTurn || overrideBypass);
         }
     }, [teamTurn, currentState]);
 
     const handleTileHover = (isMouseOn) => {
-        if (currentState === TILE_STATE.EMPTY) {
+        if (currentState === 'EMPTY') {
             return;
         }
         setIsHoveringTile(isMouseOn);
     }
     
     const handleMove = () => {
-        addChessMove({ newX: position.col, newY: position.row, type: currentState === TILE_STATE.HOLDING_PIECE ? 'CAPTURE' : 'MOVE' });
+        addChessMove({ newX: position.col, newY: position.row, type: currentState === 'HOLDING_PIECE' ? 'CAPTURE' : 'MOVE' });
     }
 
     const handleSelection = () => {
@@ -162,8 +153,13 @@ function ChessTile({
     }
 
     const getTileColor = useCallback(() => {
+
+        if (checked) {
+            return "#F00";
+        }
+
         if (validPath) {
-            if (currentState !== TILE_STATE.EMPTY) {
+            if (currentState !== 'EMPTY') {
                 return "#d80404";
             } else {
                 return "#33F";
@@ -175,7 +171,7 @@ function ChessTile({
         }
 
         return tileColor;
-    }, [isSelected, isHoveringTile, validPath, currentState]);
+    }, [isSelected, isHoveringTile, validPath, currentState, checked]);
 
     if (position.row === undefined || position.col === undefined) {
         return null;
@@ -378,7 +374,7 @@ function ChessTile({
                     cursor: canBeSelected || validPath ? "pointer" : "auto"
                 }}
             >
-                <div ref={dropDiv}>{currentState === TILE_STATE.EMPTY ? null : 
+                <div ref={dropDiv}>{currentState === 'EMPTY' ? null : 
                     <ChessPiece
                         name={chessPieceHolding.name}
                         teamType={chessPieceHolding.team}
