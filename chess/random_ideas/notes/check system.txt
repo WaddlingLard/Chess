@@ -45,9 +45,9 @@ to get Tiles of Capture:
 generateValidCaptures using the capture system (might be ordinary move system)
 union with generateValidMoves using 
 
-WHEN A PIECE IS CHECKED:
-When a piece is checked the following happens:
-- The tile containing the piece is marked as checked
+HOW TO VALIDATE IF A MOVE BLOCKS CHECK
+- Clone control maps, piece table, and board
+- Project the move onto the board and into the table
 - 
 
 
